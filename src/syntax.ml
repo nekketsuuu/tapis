@@ -1,3 +1,5 @@
+open Location
+
 exception LexErr of string
 exception ParseErr of string
 exception EvalErr of string
@@ -8,30 +10,32 @@ let app_name = "piterm"
 type name = string
 [@@deriving show]
 
-type process =
+type t = process location
+and process =
   | PNil
-  | PIn   of name * name list * process
-  | POut  of name * expr list * process
-  | PRIn  of name * name list * process
-  | PPar  of process * process
-  | PRes  of name * process
-  | PIf   of expr * process * process
+  | PIn   of name * name list * t
+  | POut  of name * e list * t
+  | PRIn  of name * name list * t
+  | PPar  of t * t
+  | PRes  of name * t
+  | PIf   of e * t * t
+and e = expr location
 and expr =
   | EVar  of name
   | EUnit
   | EBool of bool
   | EInt  of int
-  | ENot  of expr
-  | EAnd  of expr * expr
-  | EOr   of expr * expr
-  | ENeg  of expr
-  | EAdd  of expr * expr
-  | ESub  of expr * expr
-  | EMul  of expr * expr
-  | EDiv  of expr * expr
-  | EEq   of expr * expr
-  | ELt   of expr * expr
-  | EGt   of expr * expr
-  | ELeq  of expr * expr
-  | EGeq  of expr * expr
+  | ENot  of e
+  | EAnd  of e * e
+  | EOr   of e * e
+  | ENeg  of e
+  | EAdd  of e * e
+  | ESub  of e * e
+  | EMul  of e * e
+  | EDiv  of e * e
+  | EEq   of e * e
+  | ELt   of e * e
+  | EGt   of e * e
+  | ELeq  of e * e
+  | EGeq  of e * e
 [@@deriving show]

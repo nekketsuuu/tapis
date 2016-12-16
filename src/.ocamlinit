@@ -1,5 +1,6 @@
 #use "topfind"
 #require "ppx_deriving.std"
+#mod_use "location.ml";;
 #mod_use "syntax.ml";;
 #mod_use "parser.ml";;
 #mod_use "lexer.ml";;

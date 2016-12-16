@@ -1,7 +1,13 @@
 %{
+  open Location
   open Syntax
-  let parse_error s = (* Called by the parser function on error *)
-    raise @@ ParseErr("Parser: Error")
+
+  let annot_loc x = {
+      loc_val   = x;
+      loc_start = Parsing.symbol_start_pos ();
+      loc_end   = Parsing.symbol_end_pos ();
+    }
+  let dummy_proc = Location.loc_dummy PNil
 %}
 
 %token<int>    INT
@@ -27,45 +33,51 @@
 %right PIPE
 
 %start toplevel
-%type <Syntax.process> toplevel
+%type <Syntax.t> toplevel
 %%
 
 toplevel:
     | process EOF { $1 }
+    | error       { raise @@
+		      ParseErr(Printf.sprintf
+				 "Parser: Syntex error near %s"
+				 (show_pos2
+				    (Parsing.symbol_start_pos ())
+				    (Parsing.symbol_end_pos ()))) }
 ;
 
 process:
     | res_process          { $1 }
-    | process PIPE process { PPar($1, $3) }
+    | process PIPE process { annot_loc @@ PPar($1, $3) }
 ;
 
 res_process:
     | if_process            { $1 }
-    | NEW ID IN res_process { PRes($2, $4) }
+    | NEW ID IN res_process { annot_loc @@ PRes($2, $4) }
 ;
 
 if_process:
     | rin_process                             { $1 }
-    | IF expr THEN if_process ELSE if_process { PIf($2, $4, $6) }
+    | IF expr THEN if_process ELSE if_process { annot_loc @@ PIf($2, $4, $6) }
 ;
 
 rin_process:
     | inout_process                            { $1 }
-    | AST ID QUESTION chans PERIOD rin_process { PRIn($2, $4, $6) }
-    | AST ID QUESTION chans                    { PRIn($2, $4, PNil) }
+    | AST ID QUESTION chans PERIOD rin_process { annot_loc @@ PRIn($2, $4, $6) }
+    | AST ID QUESTION chans                    { annot_loc @@ PRIn($2, $4, dummy_proc) }
 ;
 
 inout_process:
     | atomic_process                            { $1 }
-    | ID QUESTION chans PERIOD inout_process    { PIn($1, $3, $5) }
-    | ID EXCLAMATION exprs PERIOD inout_process { POut($1, $3, $5) }
-    | ID QUESTION chans                         { PIn($1, $3, PNil) }
-    | ID EXCLAMATION exprs                      { POut($1, $3, PNil) }
+    | ID QUESTION chans PERIOD inout_process    { annot_loc @@ PIn($1, $3, $5) }
+    | ID EXCLAMATION exprs PERIOD inout_process { annot_loc @@ POut($1, $3, $5) }
+    | ID QUESTION chans                         { annot_loc @@ PIn($1, $3, dummy_proc) }
+    | ID EXCLAMATION exprs                      { annot_loc @@ POut($1, $3, dummy_proc) }
 ;
 
 atomic_process:
     | LPAR process RPAR { $2 }
-    | ZERO              { PNil }
+    | ZERO              { annot_loc @@ PNil }
 ;
 
 chans:
@@ -94,37 +106,37 @@ exprs_list_non_empty:
 
 expr:
     | comp_expr     { $1 }
-    | NOT expr      { ENot($2) }
-    | expr AND expr { EAnd($1, $3) }
-    | expr OR expr  { EOr($1, $3) }
+    | NOT expr      { annot_loc @@ ENot($2) }
+    | expr AND expr { annot_loc @@ EAnd($1, $3) }
+    | expr OR expr  { annot_loc @@ EOr($1, $3) }
 ;
 
 comp_expr:
     | mult_expr               { $1 }
-    | comp_expr EQ comp_expr  { EEq($1, $3) }
-    | comp_expr LT comp_expr  { ELt($1, $3) }
-    | comp_expr GT comp_expr  { EGt($1, $3) }
-    | comp_expr LEQ comp_expr { ELeq($1, $3) }
-    | comp_expr GEQ comp_expr { EGeq($1, $3) }
+    | comp_expr EQ comp_expr  { annot_loc @@ EEq($1, $3) }
+    | comp_expr LT comp_expr  { annot_loc @@ ELt($1, $3) }
+    | comp_expr GT comp_expr  { annot_loc @@ EGt($1, $3) }
+    | comp_expr LEQ comp_expr { annot_loc @@ ELeq($1, $3) }
+    | comp_expr GEQ comp_expr { annot_loc @@ EGeq($1, $3) }
 ;
 
 mult_expr:
     | add_expr                { $1 }
-    | add_expr AST mult_expr  { EMul($1, $3) }
-    | mult_expr DIV mult_expr { EDiv($1, $3) }
+    | add_expr AST mult_expr  { annot_loc @@ EMul($1, $3) }
+    | mult_expr DIV mult_expr { annot_loc @@ EDiv($1, $3) }
 ;
 
 add_expr:
     | atomic_expr                { $1 }
-    | add_expr PLUS add_expr     { EAdd($1, $3) }
-    | atomic_expr MINUS add_expr { ESub($1, $3) }
-    | MINUS atomic_expr          { ENeg($2) }
+    | add_expr PLUS add_expr     { annot_loc @@ EAdd($1, $3) }
+    | atomic_expr MINUS add_expr { annot_loc @@ ESub($1, $3) }
+    | MINUS atomic_expr          { annot_loc @@ ENeg($2) }
 ;
 
 atomic_expr:
     | LPAR expr RPAR { $2 }
-    | LPAR RPAR      { EUnit }
-    | BOOL           { EBool($1) }
-    | INT            { EInt($1) }
-    | ID             { EVar($1) }
+    | LPAR RPAR      { annot_loc @@ EUnit }
+    | BOOL           { annot_loc @@ EBool($1) }
+    | INT            { annot_loc @@ EInt($1) }
+    | ID             { annot_loc @@ EVar($1) }
 ;

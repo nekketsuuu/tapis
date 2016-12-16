@@ -1,4 +1,5 @@
 {
+  open Location
   open Syntax
 }
 
@@ -8,7 +9,9 @@ let alpha = ['a'-'z' 'A'-'Z' '_' ]
 let ident = alpha (alpha | digit)*
 
 rule main = parse
-| space        { main lexbuf }
+| space+       { main lexbuf }
+| '\n'         { Lexing.new_line lexbuf;
+		 main lexbuf }
 | "/*"         { comment lexbuf;
 		 main lexbuf }
 | "O"          { Parser.ZERO }
@@ -41,14 +44,19 @@ rule main = parse
 | eof          { Parser.EOF }
 | digit+ as n  { Parser.INT(int_of_string n) }
 | ident+ as id { Parser.ID id }
-| _            { raise @@ LexErr("Lexer: Unknown Token \"" ^ Lexing.lexeme lexbuf ^ "\"") }
+| _            { raise @@
+		   LexErr(Printf.sprintf
+			    "Lexer: Unknown token \"%s\" near %s"
+			    (Lexing.lexeme lexbuf)
+			    (show_pos2
+			       (Lexing.lexeme_start_p lexbuf)
+			       (Lexing.lexeme_end_p lexbuf))) }
+
 and comment = parse
-| "*/"
-    { () }
-| "/*"
-    { comment lexbuf;
-      comment lexbuf }
-| eof
-    { raise @@ LexErr("Lexer: Unterminated comment") }
-| _
-    { comment lexbuf }
+| "*/" { () }
+| "/*" { comment lexbuf;
+	 comment lexbuf }
+| eof  { raise @@ LexErr("Lexer: Unterminated comment") }
+| '\n' { Lexing.new_line lexbuf;
+	 comment lexbuf }
+| _    { comment lexbuf }
