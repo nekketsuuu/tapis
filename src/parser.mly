@@ -12,7 +12,7 @@
 
 %token<int>    INT
 %token<bool>   BOOL
-%token<string> ID
+%token<Syntax.name> ID
 %token NOT AND OR
 %token PLUS MINUS DIV
 %token EQ LT GT LEQ GEQ
