@@ -1,7 +1,7 @@
 PACKS = ppx_deriving.std
 OCAMLYACC = menhir --fixed-exception
 SOURCES = \
-  location.ml syntax.ml parser.mly lexer.mll \
+  type.ml location.ml syntax.ml parser.mly lexer.mll \
   main.ml
 RESULT = main
 

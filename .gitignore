@@ -4,10 +4,14 @@
 /src/parser.mli
 /src/parser.conflicts
 *.cma
+*.cmi
 *.cmo
 *.cmx
 ._bcdi
 ._d
+
+# binary
+/src/main
 
 # Backup files
 *~

@@ -7,8 +7,9 @@ exception TypeErr of string
 
 let app_name = "piterm"
 
-type name = string
+type name = string * Type.t option
 [@@deriving show]
+  
 
 type t = process location
 and process =
