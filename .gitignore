@@ -1,0 +1,13 @@
+# Auto-generated files
+/src/lexer.ml
+/src/parser.ml
+/src/parser.mli
+/src/parser.conflicts
+*.cma
+*.cmo
+*.cmx
+._bcdi
+._d
+
+# Backup files
+*~
