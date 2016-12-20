@@ -5,7 +5,7 @@ type 'a location = {
   }
 [@@deriving show]
 
-let loc_dummy x = {
+let dummy_loc x = {
     loc_val   = x;
     loc_start = Lexing.dummy_pos;
     loc_end   = Lexing.dummy_pos;

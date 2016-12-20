@@ -7,7 +7,7 @@
       loc_start = Parsing.symbol_start_pos ();
       loc_end   = Parsing.symbol_end_pos ();
     }
-  let dummy_proc = Location.loc_dummy PNil
+  let dummy_proc = Location.dummy_loc PNil
 
   let annot_type id = (id, None)
 %}
@@ -189,5 +189,5 @@ atomic_expr:
     | INT            
         { annot_loc @@ EInt($1) }
     | ID             
-        { annot_loc @@ EVar(annot_type $1) }
+        { annot_loc @@ EVar($1) }
 ;
