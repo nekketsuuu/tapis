@@ -2,9 +2,9 @@ PACKS = ppx_deriving.std
 #OCAMLYACC = menhir
 #YFLAGS = --fixed-exception
 SOURCES = \
-  type.ml location.ml syntax.ml \
+  sbst.ml type.ml location.ml syntax.ml \
   parser.mly lexer.mll \
-  env.ml constraints.ml sbst.ml stype.ml \
+  env.ml constraintsT.ml constraintsR.ml stype.ml \
   main.ml
 RESULT = main
 

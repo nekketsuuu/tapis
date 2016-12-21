@@ -1,11 +1,11 @@
-type level = int option
+type level = int
 [@@deriving show]
 
-type region = string option
+type region = string
 [@@deriving show]
 
 type t =
-  | TChan of level * t list * region
+  | TChan of level option * t list * region option
   | TUnit
   | TBool
   | TInt
@@ -27,7 +27,7 @@ let gensym_region () =
   _region_i := !_region_i + 1;
   name
 
-(* contain : string -> Type.t -> bool *)
+(* contain : string -> t -> bool *)
 let rec contain a t =
   match t with
   | TChan(l, [], r) ->
@@ -42,8 +42,10 @@ let rec contain a t =
   | _ ->
      false
 
-(* sbst : (string * Type.t) list -> Type.t -> Type.t *)
-let rec sbst sigma t =
+open Sbst
+
+(* sbst : t sbst -> t -> t *)
+let rec sbst (sigma : t sbst) t =
   match t with
   | TUnit -> TUnit
   | TBool -> TBool
@@ -52,8 +54,7 @@ let rec sbst sigma t =
   | TVar(a) ->
      begin
        try
-	 let t = snd @@ List.find (fun (sym, t) -> sym = a) sigma in
-	 t
+	 snd @@ List.find (fun (sym, t) -> sym = a) sigma
        with
        | Not_found -> TVar(a)
      end

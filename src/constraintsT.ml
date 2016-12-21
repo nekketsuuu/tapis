@@ -1,13 +1,15 @@
-module Constraints =
+module ConstraintsT =
   Set.Make
     (struct
 	type t = Type.t * Type.t
 	let compare = compare
       end)
-include Constraints
+include ConstraintsT
 
-(* sbst : (string * Type.t) list -> t -> t *)
-let sbst sigma c =
+open Sbst
+
+(* sbst : Type.t sbst -> t -> t *)
+let sbst (sigma : Type.t sbst) c =
   let sbst' (t1, t2) =
     (Type.sbst sigma t1, Type.sbst sigma t2)
   in
