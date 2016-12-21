@@ -192,10 +192,10 @@ let rec infer_proc env pl =
 	  let (b, c') = eq_type_patterns Constraints.empty tys tys' in
 	  if b then
 	    begin
-	      body.tyxo <- Some(ty);
 	      let c' = List.fold_left (fun c tyc -> Constraints.union (snd tyc) c)
 				      c' tycs in
-	      Constraints.union (infer_proc env pl) c'
+	      body.tyxo <- Some(ty);
+	      Constraints.union (infer_proc env body.pl) c'
 	    end
 	  else
 	    raise @@ TypeErr(sprint_error_chan_args body.x body.els tys' tys)
@@ -220,7 +220,7 @@ let rec infer_proc env pl =
        let ty' = TChan(None, tys, Some(gensym_region ())) in
        let env = Env.add body.x ty' env in
        body.tyxo <- Some(ty);
-       let c2 = infer_proc env pl in
+       let c2 = infer_proc env body.pl in
        Constraints.add (ty, ty') (Constraints.union c1 c2)
   | PPar(body) ->
      let c1 = infer_proc env body.pl1 in
@@ -246,11 +246,11 @@ and infer_proc_input env body loc_start loc_end =
     let ty = Env.find body.x env in
     match ty with
     | TChan(l, tys, r) ->
-       (* TODO(nekketsuuu): 引数の型がenvにあるかもしれない。*)
        let env = List.fold_left2
 		   (fun env y ty -> Env.add y ty env)
 		   env body.ys tys in
        body.tyxo <- Some(ty);
+       body.tyyos <- List.map (fun ty -> Some(ty)) tys;
        infer_proc env body.pl
     | TVar(a) ->
        let tys = List.map (fun _ -> TVar(gensym_type ())) body.ys in

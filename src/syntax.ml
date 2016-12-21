@@ -77,11 +77,11 @@ and free_name_b bounded_names pl =
      in diff free_names body.ys
   | POut(body) ->
      let names = List.fold_left
-		   (fun names el -> union (name_expr el) names)
+		   (fun names el -> union names (name_expr el))
 		   []
 		   body.els in
      let free_names = diff names bounded_names in
-     let free_names' = free_name_b bounded_names pl in
+     let free_names' = free_name_b bounded_names body.pl in
      let free_names = union free_names free_names' in
      if List.mem body.x bounded_names then
        free_names
@@ -91,7 +91,7 @@ and free_name_b bounded_names pl =
      union (free_name_b bounded_names body.pl1)
 	   (free_name_b bounded_names body.pl2)
   | PRes(body) ->
-     remove body.x (free_name_b (add body.x bounded_names) pl)
+     remove body.x (free_name_b (add body.x bounded_names) body.pl)
   | PIf(body) ->
      let names = name_expr body.el in
      let free_names = diff names bounded_names in
