@@ -1,6 +1,8 @@
 open Location
 open Syntax
 
+let app_name = "piterm"
+
 let rec main () =
   try
     print_string "> ";
@@ -8,7 +10,7 @@ let rec main () =
     let lexbuf = Lexing.from_channel stdin in
     let process = Parser.toplevel Lexer.main lexbuf in
     let process = Syntax.closure process in
-    let process = Stype.infer process in
+    Stype.infer process;
     print_endline @@ show_process process.loc_val;
     main ()
   with

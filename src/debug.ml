@@ -1,13 +1,15 @@
 open Location
 open Syntax
 
+let app_name = "piterm-debug"
+
 let rec loop () =
   main ();
   loop ()
 and main () =
   try
     let process = parse () in
-    let process = Stype.infer process in
+    Stype.infer process;
     print_endline @@ show_process process.loc_val
   with
   | Parsing.Parse_error ->

@@ -6,6 +6,7 @@ module Constraints =
       end)
 include Constraints
 
+(* sbst : (string * Type.t) list -> t -> t *)
 let sbst sigma c =
   let sbst' (t1, t2) =
     (Type.sbst sigma t1, Type.sbst sigma t2)

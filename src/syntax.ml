@@ -5,22 +5,40 @@ exception ParseErr of string
 exception EvalErr of string
 exception TypeErr of string
 
-let app_name = "piterm"
-
 type name    = string
-and  an_name = string * Type.t option
 [@@deriving show]
-  
 
+(*
+ * In order to make type annotations mutable,
+ * I use a record for the body of process.
+ * And because the processing of PIn and PRIn
+ * are sometimes the same, I define "pin_body".
+ * However, we cannot simply make "pout_body"
+ * since there are same name labels.
+ * Although we can construct that by using
+ * recursive module etc., I avoid making types
+ * too complicated.
+ *)
 type t = process location
 and process =
   | PNil
-  | PIn   of an_name * an_name list * t
-  | POut  of an_name * e list * t
-  | PRIn  of an_name * an_name list * t
-  | PPar  of t * t
-  | PRes  of an_name * t
-  | PIf   of e * t * t
+  | PIn   of pin_body
+  | PRIn  of pin_body
+  | POut  of { x: name;
+	       mutable tyxo: Type.t option;
+	       els: e list;
+	       pl: t; }
+  | PPar  of { pl1: t; pl2: t }
+  | PRes  of { x: name;
+	       mutable tyxo: Type.t option;
+	       pl: t; }
+  | PIf   of { el: e; pl1: t; pl2: t }
+and pin_body =
+  { x:  name;
+    ys: name list;
+    mutable tyxo:  Type.t option;
+    mutable tyyos: Type.t option list;
+    pl: t; }
 and e = expr location
 and expr =
   | EVar  of name
@@ -47,45 +65,38 @@ let rec free_name pl = free_name_b [] pl
 and free_name_b bounded_names pl =
   match pl.loc_val with
   | PNil -> []
-  | PIn(xtyo, ytyos, pl)
-  | PRIn(xtyo, ytyos, pl) ->
-     let bounded_names' = union (List.map fst ytyos) bounded_names in
-     let free_names = free_name_b bounded_names' pl in
-     let x = fst xtyo in
+  | PIn(body)
+  | PRIn(body) ->
+     let bounded_names' = union body.ys bounded_names in
+     let free_names = free_name_b bounded_names' body.pl in
      let free_names =
-       if List.mem x bounded_names then
+       if List.mem body.x bounded_names then
 	 free_names
        else
-	 add x free_names
-     in
-     List.fold_left
-       (fun names (y, tyo) -> remove y names)
-       free_names
-       ytyos
-  | POut(xtyo, els, pl) ->
+	 add body.x free_names
+     in diff free_names body.ys
+  | POut(body) ->
      let names = List.fold_left
 		   (fun names el -> union (name_expr el) names)
 		   []
-		   els in
+		   body.els in
      let free_names = diff names bounded_names in
      let free_names' = free_name_b bounded_names pl in
      let free_names = union free_names free_names' in
-     let x = fst xtyo in
-     if List.mem x bounded_names then
+     if List.mem body.x bounded_names then
        free_names
      else
-       add x free_names
-  | PPar(pl1, pl2) ->
-     union (free_name_b bounded_names pl1)
-	   (free_name_b bounded_names pl2)
-  | PRes(xtyo, pl) ->
-     let x = fst xtyo in
-     remove x (free_name_b (add x bounded_names) pl)
-  | PIf(el, pl1, pl2) ->
-     let names = name_expr el in
+       add body.x free_names
+  | PPar(body) ->
+     union (free_name_b bounded_names body.pl1)
+	   (free_name_b bounded_names body.pl2)
+  | PRes(body) ->
+     remove body.x (free_name_b (add body.x bounded_names) pl)
+  | PIf(body) ->
+     let names = name_expr body.el in
      let free_names = diff names bounded_names in
-     let free_names' = union (free_name_b bounded_names pl1)
-			     (free_name_b bounded_names pl2) in
+     let free_names' = union (free_name_b bounded_names body.pl1)
+			     (free_name_b bounded_names body.pl2) in
      union free_names free_names'
 and name_expr el =
   match el.loc_val with
@@ -120,7 +131,7 @@ and diff names1 names2 =
 
 let closure pl =
   let free_names = free_name pl in
-  let restrict pl name = 
+  let restrict pl name =
     (Printf.eprintf "Warning: A free name %s is restricted globally\n%!" name;
-     Location.dummy_loc @@ PRes((name, None), pl)) in
+     Location.dummy_loc @@ PRes({ x = name; tyxo = None; pl = pl })) in
   List.fold_left restrict pl free_names

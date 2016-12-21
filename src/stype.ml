@@ -58,11 +58,8 @@ let rec unify c =
        if List.length tys1 = List.length tys2 then
 	 let c'' = List.fold_left2
 		     (fun c ty1 ty2 -> Constraints.add (ty1, ty2) c)
-		     c'
-		     tys1
-		     tys2
-	 in
-	 unify c''
+		     c' tys1 tys2
+	 in unify c''
        else
 	 raise @@ Unify(ty1, ty2)
     | (TVar(a), ty2) when not @@ Type.contain a ty2 ->
@@ -74,6 +71,7 @@ let rec unify c =
     | (ty1, ty2) ->
        raise @@ Unify(ty1, ty2)
 
+(* 型の形が等しいか確認しながら制約を集める *)
 (* eq_type_pattern : Constraints.t -> Type.t -> Type.t -> bool * Constraints.t *)
 let rec eq_type_pattern c ty1 ty2 =
   match ty1, ty2 with
@@ -174,154 +172,133 @@ and infer_binary_expr env el1 el2 tyin tyout =
   | _, _ ->
      raise @@ TypeErr(sprint_expr_error el1 ty1 tyin)
 
-(* infer_proc : Syntax.t -> Env.key -> Syntax.t * Constraints.t *)
+(* infer_proc : Syntax.t -> Env.key -> Constraints.t *)
 let rec infer_proc env pl =
-  (* TODO(nekketsuuu): 後でrefにする *)
-  let pack p = { loc_val = p; loc_start = pl.loc_start; loc_end = pl.loc_end } in
   match pl.loc_val with
   | PNil ->
-     (pack PNil, Constraints.empty)
-  | PIn(xtyo, ytyos, pl) ->
-     infer_proc_input env xtyo ytyos pl
-		      (fun xtyo ytyos pl -> PIn(xtyo, ytyos, pl))
-		      pl.loc_start pl.loc_end
-  | PRIn(xtyo, ytyos, pl) ->
-     infer_proc_input env xtyo ytyos pl
-		      (fun xtyo ytyos pl -> PRIn(xtyo, ytyos, pl))
-		      pl.loc_start pl.loc_end
-  | POut(xtyo, els, pl) ->
-     infer_proc_output env xtyo els pl
-		       (fun xtyo els pl -> POut(xtyo, els, pl))
-		       pl.loc_start pl.loc_end
-  | PPar(pl1, pl2) ->
-     let (pl1, c1) = infer_proc env pl1 in
-     let (pl2, c2) = infer_proc env pl2 in
-     (pack @@ PPar(pl1, pl2), Constraints.union c1 c2)
-  | PRes(xtyo, pl) ->
+     Constraints.empty
+  | PIn(body)
+  | PRIn(body) ->
+     infer_proc_input env body pl.loc_start pl.loc_end
+  | POut(body) ->
+     let pack e = { loc_val = e; loc_start = pl.loc_start; loc_end = pl.loc_end } in
+     if Env.mem body.x env then
+       let ty = Env.find body.x env in
+       match ty with
+       | TChan(l, tys, r) ->
+	  (* Check (types of es) = tys *)
+	  let tycs = List.map (infer_expr env) body.els in
+	  let tys' = List.map fst tycs in
+	  let (b, c') = eq_type_patterns Constraints.empty tys tys' in
+	  if b then
+	    begin
+	      body.tyxo <- Some(ty);
+	      let c' = List.fold_left (fun c tyc -> Constraints.union (snd tyc) c)
+				      c' tycs in
+	      Constraints.union (infer_proc env pl) c'
+	    end
+	  else
+	    raise @@ TypeErr(sprint_error_chan_args body.x body.els tys' tys)
+       | TVar(a) ->
+	  (* Make a constraint *)
+	  let tycs = List.map (infer_expr env) body.els in
+	  let tys = List.map fst tycs in
+	  let c = infer_proc env body.pl in
+	  let c = List.fold_left (fun c tyc -> Constraints.union (snd tyc) c)
+				 c tycs in
+	  body.tyxo <- Some(ty);
+	  Constraints.add (ty, TChan(None, tys, Some(gensym_region ()))) c
+       | _ ->
+	  raise @@ TypeErr(sprint_expr_error_chan (pack @@ EVar(body.x)) ty)
+     else
+       let tycs = List.map (infer_expr env) body.els in
+       let tys = List.map fst tycs in
+       let c1 = List.fold_left (fun c1 c2 -> Constraints.union c1 c2)
+			       Constraints.empty
+			       (List.map snd tycs) in
+       let ty = TVar(gensym_type ()) in
+       let ty' = TChan(None, tys, Some(gensym_region ())) in
+       let env = Env.add body.x ty' env in
+       body.tyxo <- Some(ty);
+       let c2 = infer_proc env pl in
+       Constraints.add (ty, ty') (Constraints.union c1 c2)
+  | PPar(body) ->
+     let c1 = infer_proc env body.pl1 in
+     let c2 = infer_proc env body.pl2 in
+     Constraints.union c1 c2
+  | PRes(body) ->
      let ty = TVar(gensym_type ()) in
-     let env = Env.add (fst xtyo) ty env in
-     let (pl, c) = infer_proc env pl in
-     (pack @@ PRes((fst xtyo, Some(ty)), pl), c)
-  | PIf(el, pl1, pl2) ->
-     let (tye, c0) = infer_expr env el in
+     let env = Env.add body.x ty env in
+     body.tyxo <- Some(ty);
+     infer_proc env body.pl
+  | PIf(body) ->
+     let (tye, c0) = infer_expr env body.el in
      match tye with
      | TBool ->
-	let (pl1, c1) = infer_proc env pl1 in
-	let (pl2, c2) = infer_proc env pl2 in
-	let c = Constraints.union c0 (Constraints.union c1 c2) in
-	(pack @@ PIf(el, pl1, pl2), c)
+	let c1 = infer_proc env body.pl1 in
+	let c2 = infer_proc env body.pl2 in
+	Constraints.union c0 (Constraints.union c1 c2)
      | _ ->
-	raise @@ TypeErr(sprint_expr_error el tye TBool)
-and infer_proc_input env xtyo ytyos pl to_type loc_start loc_end =
+	raise @@ TypeErr(sprint_expr_error body.el tye TBool)
+and infer_proc_input env body loc_start loc_end =
   let pack e = { loc_val = e; loc_start = loc_start; loc_end = loc_end } in
-  if Env.mem (fst xtyo) env then
-    let ty = Env.find (fst xtyo) env in
+  if Env.mem body.x env then
+    let ty = Env.find body.x env in
     match ty with
     | TChan(l, tys, r) ->
-       (* TODO(nekketsuuu): 引数の型がenvにあるかもしれない *)
+       (* TODO(nekketsuuu): 引数の型がenvにあるかもしれない。*)
        let env = List.fold_left2
-		   (fun env ytyo ty -> Env.add (fst ytyo) ty env)
-		   env
-		   ytyos
-		   tys in
-       let (pl, c) = infer_proc env pl in
-       (pack @@ to_type (fst xtyo, Some(ty)) ytyos pl, c)
+		   (fun env y ty -> Env.add y ty env)
+		   env body.ys tys in
+       body.tyxo <- Some(ty);
+       infer_proc env body.pl
     | TVar(a) ->
-       let tys = List.map (fun _ -> TVar(gensym_type ())) ytyos in
+       let tys = List.map (fun _ -> TVar(gensym_type ())) body.ys in
        let ty' = TChan(None, tys, Some(gensym_region ())) in
-       let env = Env.add (fst xtyo) ty' env in
+       let env = Env.add body.x ty' env in
        let env = List.fold_left2
-		   (fun env ytyo ty -> Env.add (fst ytyo) ty env)
-		   env
-		   ytyos
-		   tys in
-       let (pl, c) = infer_proc env pl in
-       (pack @@ to_type (fst xtyo, Some(ty)) ytyos pl, Constraints.add (ty, ty') c)
+		   (fun env y ty -> Env.add y ty env)
+		   env body.ys tys in
+       body.tyxo <- Some(ty);
+       body.tyyos <- List.map (fun ty -> Some(ty)) tys;
+       Constraints.add (ty, ty') (infer_proc env body.pl)
     | _ ->
-       raise @@ TypeErr(sprint_expr_error_chan (pack @@ EVar(fst xtyo)) ty)
+       raise @@ TypeErr(sprint_expr_error_chan (pack @@ EVar(body.x)) ty)
   else
     let ty = TVar(gensym_type ()) in
-    let tys = List.map (fun _ -> TVar(gensym_type ())) ytyos in
+    let tys = List.map (fun _ -> TVar(gensym_type ())) body.ys in
     let ty' = TChan(None, tys, Some(gensym_region ())) in
-    let env = Env.add (fst xtyo) ty' env in
+    let env = Env.add body.x ty' env in
     let env = List.fold_left2
-		(fun env ytyo ty -> Env.add (fst ytyo) ty env)
-		env
-		ytyos
-		tys in
-    let (pl, c) = infer_proc env pl in
-    (pack @@ to_type (fst xtyo, Some(ty)) ytyos pl, Constraints.add (ty, ty') c)
-and infer_proc_output env xtyo els pl to_type loc_start loc_end =
-  let pack e = { loc_val = e; loc_start = loc_start; loc_end = loc_end } in
-  if Env.mem (fst xtyo) env then
-    let ty = Env.find (fst xtyo) env in
-    match ty with
-    | TChan(l, tys, r) ->
-       (* Check (types of es) = tys *)
-       let result = List.map (infer_expr env) els in
-       let tys' = List.map fst result in
-       let (b, c') = eq_type_patterns Constraints.empty tys tys' in
-       let c' = List.fold_left (fun c tyc -> Constraints.union (snd tyc) c)
-			       c' result in
-       if b then
-	 let (pl, c) = infer_proc env pl in
-	 (pack @@ to_type (fst xtyo, Some(ty)) els pl, Constraints.union c c')
-       else
-	 raise @@ TypeErr(sprint_error_chan_args (fst xtyo) els tys' tys)
-    | TVar(a) ->
-       (* Make a constraint *)
-       let result = List.map (infer_expr env) els in
-       let tys = List.map fst result in
-       let (pl, c) = infer_proc env pl in
-       let c = List.fold_left (fun c tyc -> Constraints.union (snd tyc) c)
-			      c result in
-       (pack @@ to_type (fst xtyo, Some(ty)) els pl,
-	Constraints.add (ty, TChan(None, tys, Some(gensym_region ()))) c)
-    | _ ->
-       raise @@ TypeErr(sprint_expr_error_chan (pack @@ EVar(fst xtyo)) ty)
-  else
-    let results = List.map (infer_expr env) els in
-    let tys = List.map fst results in
-    let c1 = List.fold_left (fun c1 c2 -> Constraints.union c1 c2)
-			    Constraints.empty
-			    (List.map snd results) in
-    let ty = TVar(gensym_type ()) in
-    let ty' = TChan(None,
-		    tys,
-		    Some(gensym_region ())) in
-    let env = Env.add (fst xtyo) ty' env in
-    let (pl, c2) = infer_proc env pl in
-    let c = Constraints.add (ty, ty') (Constraints.union c1 c2) in
-    (pack @@ to_type (fst xtyo, Some(ty)) els pl, c)
+		(fun env y ty -> Env.add y ty env)
+		env body.ys tys in
+    Constraints.add (ty, ty') (infer_proc env body.pl)
 
-(* annotate : subst_t -> Syntax.t -> Syntax.t *)
+(* annotate : subst_t -> Syntax.t -> unit *)
 let rec annotate sigma pl =
-  let pl' =
-    match pl.loc_val with
-    | PNil ->
-       PNil
-    | PIn(xtyo, ytyos, pl) ->
-       PIn(annotate_name sigma xtyo,
-	   List.map (annotate_name sigma) ytyos,
-	   annotate sigma pl)
-    | PRIn(xtyo, ytyos, pl) ->
-       PIn(annotate_name sigma xtyo,
-	   List.map (annotate_name sigma) ytyos,
-	   annotate sigma pl)
-    | POut(xtyo, els, pl) ->
-       POut(annotate_name sigma xtyo, els, annotate sigma pl)
-    | PRes(xtyo, pl) ->
-       PRes(annotate_name sigma xtyo, annotate sigma pl)
-    | PPar(pl1, pl2) ->
-       PPar(annotate sigma pl1, annotate sigma pl2)
-    | PIf(e, pl1, pl2) ->
-       PIf(e, annotate sigma pl1, annotate sigma pl2)
-  in
-  { loc_val = pl'; loc_start = pl.loc_start; loc_end = pl.loc_end }
-and annotate_name (sigma : sbst_t) (x, tyo) =
+  match pl.loc_val with
+  | PNil -> ()
+  | PIn(body)
+  | PRIn(body) ->
+     body.tyxo <- annotate_type_option sigma body.tyxo;
+     body.tyyos <- List.map (annotate_type_option sigma) body.tyyos;
+     annotate sigma body.pl
+  | POut(body) ->
+     body.tyxo <- annotate_type_option sigma body.tyxo;
+     annotate sigma body.pl
+  | PRes(body) ->
+     body.tyxo <- annotate_type_option sigma body.tyxo;
+     annotate sigma body.pl
+  | PPar(body) ->
+     annotate sigma body.pl1;
+     annotate sigma body.pl2
+  | PIf(body) ->
+     annotate sigma body.pl1;
+     annotate sigma body.pl2
+and annotate_type_option (sigma : sbst_t) tyo =
   match tyo with
-  | Some(ty) -> (x, Some(annotate_type sigma ty))
-  | None -> (x, None)
+  | Some(ty) -> Some(annotate_type sigma ty)
+  | None -> None
 and annotate_type (sigma : sbst_t) ty =
   match ty with
   | TVar(a) ->
@@ -339,9 +316,9 @@ and annotate_type (sigma : sbst_t) ty =
      TChan(l, List.map (annotate_type sigma) tys, r)
   | ty -> ty
 
-(* infer : Syntax.t -> Syntax.t *)
+(* infer : Syntax.t -> unit *)
 let infer pl =
-  let (pl, c) = infer_proc Env.empty pl in
+  let c = infer_proc Env.empty pl in
   try
     let sigma = unify c in
     annotate sigma pl
