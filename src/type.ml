@@ -32,11 +32,11 @@ let rec contain a t =
   match t with
   | TChan(l, [], r) ->
      false
-  | TChan(l, t :: ts, r) ->
-     if contain a t then
+  | TChan(l, ty :: tys, r) ->
+     if contain a ty then
        true
      else
-       contain a (TChan(l, ts, r))
+       contain a (TChan(l, tys, r))
   | TVar(a') when a' = a ->
      true
   | _ ->
@@ -48,7 +48,7 @@ let rec sbst sigma t =
   | TUnit -> TUnit
   | TBool -> TBool
   | TInt -> TInt
-  | TChan(l, ts, r) -> TChan(l, List.map (sbst sigma) ts, r)
+  | TChan(l, tys, r) -> TChan(l, List.map (sbst sigma) tys, r)
   | TVar(a) ->
      begin
        try
