@@ -5,7 +5,7 @@ exception ParseErr of string
 exception EvalErr of string
 exception TypeErr of string
 
-type name    = string
+type name = string
 [@@deriving show]
 
 (*
@@ -109,6 +109,7 @@ and name_expr el =
   | EAdd(e1, e2) | ESub(e1, e2) | EMul(e1, e2) | EDiv(e1, e2)
   | EEq(e1, e2) | ELt(e1, e2) | EGt(e1, e2) | ELeq(e1, e2) | EGeq(e1, e2) ->
      union (name_expr e1) (name_expr e2)
+(* utility functions for using a list as a set *)
 and remove x names = List.filter (fun name -> name != x) names
 and add x names =
   if List.mem x names then names
@@ -129,6 +130,7 @@ and diff names1 names2 =
     let names2' = List.tl names2 in
     diff (remove name names1) names2'
 
+(* closure : t -> name list *)
 let closure pl =
   let free_names = free_name pl in
   let restrict pl name =
