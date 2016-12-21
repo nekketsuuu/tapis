@@ -46,7 +46,7 @@ type sbst_t = (string * Type.t) list
 let compose sigma1 sigma2 = List.append sigma1 sigma2
 
 (* unify : Constraints.t -> sbst_t *)
-let rec unify c = 
+let rec unify c =
   if c = Constraints.empty then []
   else
     let tt = Constraints.choose c in

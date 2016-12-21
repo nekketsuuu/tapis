@@ -5,7 +5,7 @@
 
 let digit = ['0'-'9']
 let space = ' ' | '\t' | '\r' | '\n'
-let alpha = ['a'-'z' 'A'-'Z' '_' ] 
+let alpha = ['a'-'z' 'A'-'Z' '_' ]
 let ident = alpha (alpha | digit)*
 
 rule main = parse

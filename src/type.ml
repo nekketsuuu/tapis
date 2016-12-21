@@ -17,7 +17,7 @@ let gensym_type () =
   let name = "a" ^ string_of_int (!_type_i) in
   _type_i := !_type_i + 1;
   name
-let rec gensym_type_list n = 
+let rec gensym_type_list n =
   if n <= 0 then []
   else gensym_type :: gensym_type_list (n-1)
 
