@@ -43,7 +43,7 @@ rule main = parse
 | "false"      { Parser.BOOL(false) }
 | eof          { Parser.EOF }
 | digit+ as n  { Parser.INT(int_of_string n) }
-| ident+ as id { Parser.ID id }
+| ident+ as id { Parser.ID(id) }
 | _            { raise @@
 		   LexErr(Printf.sprintf
 			    "Lexer: Unknown token \"%s\" near %s"
