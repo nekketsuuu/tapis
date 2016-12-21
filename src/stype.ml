@@ -3,6 +3,7 @@
 open Syntax
 open Location
 open Type
+open Sbst
 
 exception Unify of Type.t * Type.t
 
@@ -42,10 +43,7 @@ let rec sprint_error_chan_args x els actual_tys expected_tys =
   | (aty :: atys), (ety :: etys) ->
      sprint_error_chan_args x (List.tl els) atys etys
 
-type sbst_t = (string * Type.t) list
-let compose sigma1 sigma2 = List.append sigma1 sigma2
-
-(* unify : Constraints.t -> sbst_t *)
+(* unify : Constraints.t -> Type.t sbst *)
 let rec unify c =
   if c = Constraints.empty then []
   else
@@ -64,10 +62,10 @@ let rec unify c =
 	 raise @@ Unify(ty1, ty2)
     | (TVar(a), ty2) when not @@ Type.contain a ty2 ->
        let c'' = Constraints.sbst [(a, ty2)] c' in
-       compose (unify c'') [(a, ty2)]
+       Sbst.compose (unify c'') [(a, ty2)]
     | (ty1, TVar(a)) when not @@ Type.contain a ty1 ->
        let c'' = Constraints.sbst [(a, ty1)] c' in
-       compose (unify c'') [(a, ty1)]
+       Sbst.compose (unify c'') [(a, ty1)]
     | (ty1, ty2) ->
        raise @@ Unify(ty1, ty2)
 
@@ -233,13 +231,15 @@ let rec infer_proc env pl =
      infer_proc env body.pl
   | PIf(body) ->
      let (tye, c0) = infer_expr env body.el in
-     match tye with
-     | TBool ->
-	let c1 = infer_proc env body.pl1 in
-	let c2 = infer_proc env body.pl2 in
-	Constraints.union c0 (Constraints.union c1 c2)
-     | _ ->
-	raise @@ TypeErr(sprint_expr_error body.el tye TBool)
+     begin
+       match tye with
+       | TBool ->
+	  let c1 = infer_proc env body.pl1 in
+	  let c2 = infer_proc env body.pl2 in
+	  Constraints.union c0 (Constraints.union c1 c2)
+       | _ ->
+	  raise @@ TypeErr(sprint_expr_error body.el tye TBool)
+     end
 and infer_proc_input env body loc_start loc_end =
   let pack e = { loc_val = e; loc_start = loc_start; loc_end = loc_end } in
   if Env.mem body.x env then
@@ -274,7 +274,7 @@ and infer_proc_input env body loc_start loc_end =
 		env body.ys tys in
     Constraints.add (ty, ty') (infer_proc env body.pl)
 
-(* annotate : subst_t -> Syntax.t -> unit *)
+(* annotate : Type.t sbst -> Syntax.t -> unit *)
 let rec annotate sigma pl =
   match pl.loc_val with
   | PNil -> ()
@@ -295,11 +295,11 @@ let rec annotate sigma pl =
   | PIf(body) ->
      annotate sigma body.pl1;
      annotate sigma body.pl2
-and annotate_type_option (sigma : sbst_t) tyo =
+and annotate_type_option (sigma : Type.t sbst) tyo =
   match tyo with
   | Some(ty) -> Some(annotate_type sigma ty)
   | None -> None
-and annotate_type (sigma : sbst_t) ty =
+and annotate_type (sigma : Type.t sbst) ty =
   match ty with
   | TVar(a) ->
      begin
@@ -324,4 +324,4 @@ let infer pl =
     annotate sigma pl
   with
   | Unify(ty1, ty2) ->
-     raise @@ TypeErr("TODO(nekketsuuu): unify error")
+     raise @@ TypeErr("TODO(nekketsuuu): type unify error")

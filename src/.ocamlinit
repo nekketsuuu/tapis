@@ -7,5 +7,6 @@
 #mod_use "lexer.ml";;
 #mod_use "env.ml";;
 #mod_use "constraints.ml";;
+#mod_use "sbst.ml";;
 #mod_use "stype.ml";;
 #mod_use "debug.ml";;

@@ -4,7 +4,7 @@ PACKS = ppx_deriving.std
 SOURCES = \
   type.ml location.ml syntax.ml \
   parser.mly lexer.mll \
-  env.ml constraints.ml stype.ml \
+  env.ml constraints.ml sbst.ml stype.ml \
   main.ml
 RESULT = main
 
