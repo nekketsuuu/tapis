@@ -14,7 +14,7 @@ type t =
 
 let _type_i = ref 0
 let gensym_type () =
-  let name = "a" ^ string_of_int (!_type_i) in
+  let name = "'a" ^ string_of_int (!_type_i) in
   _type_i := !_type_i + 1;
   name
 let rec gensym_type_list n =
@@ -58,3 +58,54 @@ let rec sbst (sigma : t sbst) t =
        with
        | Not_found -> TVar(a)
      end
+
+(*
+ * pretty print
+ *)
+
+open Format
+
+let print_level_option lo =
+  match lo with
+  | Some(l) -> print_string @@ "(" ^ string_of_int l ^ ")"
+  | None    -> ()
+let print_region_option ro =
+  match ro with
+  | Some(r) -> print_string r
+  | None    -> print_string "?"
+
+let rec print_t ty =
+  open_box 1;
+  begin 
+    match ty with
+    | TChan(lo, tys, ro) ->
+       print_string "#";
+       print_level_option lo;
+       print_string "[";
+       open_hovbox 0;
+       print_t_list tys;
+       print_string ";";
+       print_space ();
+       print_region_option ro;
+       close_box ();
+       print_string "]";
+    | TUnit ->
+       print_string "unit"
+    | TBool ->
+       print_string "bool"
+    | TInt ->
+       print_string "int"
+    | TVar(a) ->
+       print_string a
+  end;
+  close_box ()
+and print_t_list tys =
+  match tys with
+  | [] -> ()
+  | ty :: tys ->
+     print_t ty;
+     List.iter
+       (fun ty -> print_string ",";
+		  print_space ();
+		  print_t ty)
+       tys

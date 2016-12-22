@@ -11,7 +11,7 @@ let rec main () =
     let process = Parser.toplevel Lexer.main lexbuf in
     let process = Syntax.closure process in
     Stype.infer process;
-    print_endline @@ show_process process.loc_val;
+    Syntax.print_t process;
     main ()
   with
   | Parsing.Parse_error ->

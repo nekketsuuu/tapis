@@ -8,9 +8,9 @@ let rec loop () =
   loop ()
 and main () =
   try
-    let process = parse () in
+    let process = Syntax.closure @@ parse () in
     Stype.infer process;
-    print_endline @@ show_process process.loc_val
+    Syntax.print_t process
   with
   | Parsing.Parse_error ->
      print_endline @@ app_name ^ ": Parse_error";

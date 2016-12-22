@@ -5,6 +5,10 @@ exception ParseErr of string
 exception EvalErr of string
 exception TypeErr of string
 
+(*
+ * syntax
+ *)
+
 type name = string
 [@@deriving show]
 
@@ -19,6 +23,7 @@ type name = string
  * recursive module etc., I avoid making types
  * too complicated.
  *)
+(* TODO(nekketsuuu): closedなので型アノテーションはPResにだけあればいいのでは *)
 type t = process location
 and process =
   | PNil
@@ -59,6 +64,10 @@ and expr =
   | ELeq  of e * e
   | EGeq  of e * e
 [@@deriving show]
+
+(*
+ * utility functions
+ *)
 
 (* free_name : t -> name list *)
 let rec free_name pl = free_name_b [] pl
@@ -137,3 +146,221 @@ let closure pl =
     (Printf.eprintf "Warning: A free name %s is restricted globally\n%!" name;
      Location.dummy_loc @@ PRes({ x = name; tyxo = None; pl = pl })) in
   List.fold_left restrict pl free_names
+
+(*
+ * pretty print
+ *)
+
+open Format
+
+let tab_width = 2
+
+let rec print_t pl =
+  open_box tab_width;
+  print_t' pl;
+  close_box ();
+  print_newline ();
+and print_t' pl =
+  print_process pl.loc_val
+and print_process p =
+  begin
+    match p with
+    | PNil ->
+       print_string "O"
+    | PIn(body) ->
+       open_hbox ();
+       print_string @@ body.x ^ "?";
+       print_names body.ys;
+       print_string ".";
+       print_cut ();
+       print_t' body.pl;
+       close_box ()
+    | PRIn(body) ->
+       open_hovbox 3;
+       print_string @@ "(*" ^ body.x ^ "?";
+       print_names body.ys;
+       print_string ".";
+       print_cut ();
+       print_t' body.pl;
+       print_string ")";
+       close_box ()
+    | POut(body) ->
+       open_hovbox tab_width;
+       print_string @@ body.x ^ "!";
+       print_es body.els;
+       print_string ".";
+       print_cut ();
+       print_t' body.pl;
+       close_box ()
+    | PPar(body) ->
+       let rec print_ppar pl1 pl2 =
+	 open_vbox 0;
+	 (match pl1.loc_val with
+	  | PPar(body) ->
+	     print_ppar body.pl1 body.pl2
+	  | _ ->
+	     print_t' pl1);
+	 print_cut ();
+	 print_string "| ";
+	 (match pl2.loc_val with
+	  | PPar(body) ->
+	     print_ppar body.pl1 body.pl2
+	  | _ ->
+	     print_t' pl2);
+	 close_box ();
+       in
+       open_box 1;
+       print_string "(";
+       print_ppar body.pl1 body.pl2;
+       print_string ")";
+       close_box ();
+    | PRes(body) ->
+       let rec print_pres x tyxo pl =
+	 print_string @@ "new ";
+	 (match tyxo with
+	  | None ->
+	     print_string x
+	  | Some(tyx) ->
+	     (print_string @@ "(" ^ x;
+	      print_string " : ";
+	      Type.print_t tyx;
+	      print_string ")"));
+	 print_string " in";
+	 (match pl.loc_val with
+	  | PRes(body) ->
+	     (print_space ();
+	      print_pres body.x body.tyxo body.pl)
+	  | _ ->
+	     ())
+       in
+       open_vbox tab_width;
+       open_box 0;
+       print_pres body.x body.tyxo body.pl;
+       close_box ();
+       print_cut ();
+       open_box 0;
+       print_t' body.pl;
+       close_box ();
+       close_box ()
+    | PIf(body) ->
+       open_vbox 0;
+       (* then clause *)
+       open_vbox tab_width;
+       print_string "if ";
+       print_e body.el;
+       print_string " then";
+       print_space ();
+       close_box ();
+       open_box 0;
+       print_t' body.pl1;
+       close_box ();
+       (* else clause *)
+       print_space ();
+       open_vbox tab_width;
+       print_string "else";
+       print_space ();
+       open_box 0;
+       print_t' body.pl2;
+       close_box ();
+       close_box ();
+       close_box ()
+  end;
+and print_names ys =
+  let n = List.length ys in
+  if n = 0 then
+    (eprintf "Warning: no arguments for channel input";
+     print_string "()")
+  else if n = 1 then
+    print_string @@ List.hd ys
+  else
+    (open_hovbox 1;
+     print_string "(";
+     print_names' ys;
+     print_string ")";
+     close_box ())
+and print_names' ys =
+  match ys with
+  | [] -> ()
+  | y :: ys ->
+     print_string y;
+     List.iter (fun y -> print_string ","; print_space (); print_string y;) ys
+and print_es els =
+  let n = List.length els in
+  if n = 0 then
+    print_string "()"
+  else if n = 1 then
+    let el = List.hd els in
+    match el.loc_val with
+    | EVar(_) | EUnit | EBool(_) | EInt(_)
+    | ENot(_) | ENeg(_) ->
+       print_e el
+    | _ ->
+       (open_box 1;
+	print_string "(";
+	print_e el;
+	print_string ")";
+	close_box ())
+  else
+    (open_hovbox 1;
+     print_string "(";
+     print_es' els;
+     print_string ")";
+     close_box ())
+and print_es' els =
+  match els with
+  | [] -> ()
+  | el :: els ->
+     print_e el;
+     List.iter (fun el -> (print_string ","; print_space (); print_e el)) els
+and print_e el =
+  print_expr el.loc_val
+and print_expr e =
+  match e with
+  | EVar(x) ->
+     print_string x
+  | EUnit ->
+     print_string "()"
+  | EBool(b) ->
+     print_bool b
+  | EInt(i) ->
+     print_int i
+  | ENot(el) ->
+     print_unary_expr "not" el
+  | ENeg(el) ->
+     print_unary_expr "-" el
+  | EAnd(el1, el2) ->
+     print_binary_expr "and" el1 el2
+  | EOr(el1, el2) ->
+     print_binary_expr "or" el1 el2
+  | EAdd(el1, el2) ->
+     print_binary_expr "+" el1 el2
+  | ESub(el1, el2) ->
+     print_binary_expr "-" el1 el2
+  | EMul(el1, el2) ->
+     print_binary_expr "*" el1 el2
+  | EDiv(el1, el2) ->
+     print_binary_expr "/" el1 el2
+  | EEq(el1, el2) ->
+     print_binary_expr "=" el1 el2
+  | ELt(el1, el2) ->
+     print_binary_expr "<" el1 el2
+  | EGt(el1, el2) ->
+     print_binary_expr ">" el1 el2
+  | ELeq(el1, el2) ->
+     print_binary_expr "<=" el1 el2
+  | EGeq(el1, el2) ->
+     print_binary_expr ">=" el1 el2
+and print_unary_expr (op : string) el =
+  open_box @@ String.length op + 1;
+  print_string "(";
+  print_string op;
+  print_e el;
+  print_string ")";
+  close_box ()
+and print_binary_expr (op : string) el1 el2 =
+  open_box 0;
+  print_e el1;
+  print_string @@ " " ^ op;
+  print_space ();
+  print_e el2;
+  close_box ()
