@@ -30,8 +30,8 @@ rule main = parse
 | ")"          { Parser.RPAR }
 | ","          { Parser.CAMMA }
 | "not"        { Parser.NOT }
-| "and"        { Parser.AND }
-| "or"         { Parser.OR }
+| "&&"         { Parser.AND }
+| "||"         { Parser.OR }
 | "+"          { Parser.PLUS }
 | "-"          { Parser.MINUS }
 | "/"          { Parser.DIV }
