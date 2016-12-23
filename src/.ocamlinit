@@ -1,9 +1,10 @@
 #use "topfind"
 #require "ppx_deriving.std"
+#mod_use "error.ml";;
 #mod_use "sbst.ml";;
 #mod_use "type.ml";;
 #mod_use "location.ml";;
-#mod_use "syntax.ml";;
+#mod_use "piSyntax.ml";;
 #mod_use "parser.ml";;
 #mod_use "lexer.ml";;
 #mod_use "env.ml";;

@@ -1,6 +1,7 @@
 %{
+  open Error
   open Location
-  open Syntax
+  open PiSyntax
 
   let annot_loc x = {
       loc_val   = x;
@@ -37,7 +38,7 @@
 %right PIPE
 
 %start toplevel
-%type <Syntax.pl> toplevel
+%type <PiSyntax.pl> toplevel
 %%
 
 toplevel:

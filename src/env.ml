@@ -1,7 +1,7 @@
 module Env =
   Map.Make
     (struct
-	type t = Syntax.name
+	type t = PiSyntax.name
 	let compare = compare
       end)
 include Env

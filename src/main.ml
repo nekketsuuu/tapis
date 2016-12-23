@@ -1,5 +1,6 @@
+open Error
 open Location
-open Syntax
+open PiSyntax
 
 let app_name = "piterm"
 
@@ -9,9 +10,9 @@ let rec main () =
     flush stdout;
     let lexbuf = Lexing.from_channel stdin in
     let process = Parser.toplevel Lexer.main lexbuf in
-    let process = Syntax.closure process in
+    let process = PiSyntax.closure process in
     Stype.infer process;
-    Syntax.print_pl process;
+    PiSyntax.print_pl process;
     main ()
   with
   | Parsing.Parse_error ->

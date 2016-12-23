@@ -1,6 +1,7 @@
 (* simple type inference *)
 
-open Syntax
+open Error
+open PiSyntax
 open Location
 open Type
 open Sbst
@@ -8,19 +9,19 @@ open Sbst
 exception UnifyT of Type.t * Type.t
 exception UnifyR of Type.region * Type.region
 
-(* sprint_expr_error : Syntax.pl -> Type.t -> Type.t -> string *)
+(* sprint_expr_error : PiSyntax.pl -> Type.t -> Type.t -> string *)
 let sprint_expr_error el actual_ty expected_ty =
   (* TODO(nekketsuuu): 型のpretty print *)
   (* TODO(nekketsuuu): print location *)
   Printf.sprintf
     "An expression %s has type %s but an expression was expected of type %s"
-    (Syntax.show_expr el.loc_val)
+    (PiSyntax.show_expr el.loc_val)
     (Type.show actual_ty)
     (Type.show expected_ty)
 let sprint_expr_error_chan el actual_ty =
   Printf.sprintf
     "An expression %s has type %s but an expression was expected of channel type"
-    (Syntax.show_expr el.loc_val)
+    (PiSyntax.show_expr el.loc_val)
     (Type.show actual_ty)
 let rec sprint_error_chan_args x els actual_tys expected_tys =
   match actual_tys, expected_tys with
@@ -38,7 +39,7 @@ let rec sprint_error_chan_args x els actual_tys expected_tys =
   | (aty :: atys), (ety :: etys) when aty != ety ->
      Printf.sprintf
        "Channel arguments %s has type %s but an expression was expected of type %s"
-       (Syntax.show_expr (List.hd els).loc_val)
+       (PiSyntax.show_expr (List.hd els).loc_val)
        (Type.show aty)
        (Type.show ety)
   | (aty :: atys), (ety :: etys) ->
@@ -116,7 +117,7 @@ and eq_type_patterns ct cr tys1 tys2 =
      else
        (false, ct, cr)
 
-(* infer_expr : Env.key -> Syntax.el -> Type.t * ConstraintsT.t * ConstraintsR.t *)
+(* infer_expr : Env.key -> PiSyntax.el -> Type.t * ConstraintsT.t * ConstraintsR.t *)
 let rec infer_expr env el =
   match el.loc_val with
   | EVar(x) ->
@@ -195,7 +196,7 @@ and infer_binary_expr env el1 el2 tyin tyout =
   | _, _ ->
      raise @@ TypeErr(sprint_expr_error el1 ty1 tyin)
 
-(* infer_proc : Syntax.pl -> Env.key -> ConstraintsT.t * ConstraintsR.t *)
+(* infer_proc : PiSyntax.pl -> Env.key -> ConstraintsT.t * ConstraintsR.t *)
 let rec infer_proc env pl =
   match pl.loc_val with
   | PNil ->
@@ -320,7 +321,7 @@ and infer_proc_input env body loc_start loc_end =
     let (ct, cr) = infer_proc env body.pl in
     (ConstraintsT.add (ty, ty') ct, cr)
 
-(* annotate : Type.t sbst -> Type.region sbst -> Syntax.pl -> unit *)
+(* annotate : Type.t sbst -> Type.region sbst -> PiSyntax.pl -> unit *)
 let rec annotate sigmaT sigmaR pl =
   (* TODO *)
   match pl.loc_val with
@@ -372,7 +373,7 @@ and annotate_type (sigmaT : Type.t sbst) (sigmaR : Type.region sbst) ty =
 	 raise @@ TypeErr("Unexpected error at annotate_type: region is None"))
   | ty -> ty
 
-(* infer : Syntax.pl -> unit *)
+(* infer : PiSyntax.pl -> unit *)
 let infer pl =
   let (ct, cr) = infer_proc Env.empty pl in
   try

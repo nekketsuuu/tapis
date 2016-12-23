@@ -1,5 +1,6 @@
+open Error
 open Location
-open Syntax
+open PiSyntax
 
 let app_name = "piterm-debug"
 
@@ -8,9 +9,9 @@ let rec loop () =
   loop ()
 and main () =
   try
-    let process = Syntax.closure @@ parse () in
+    let process = PiSyntax.closure @@ parse () in
     Stype.infer process;
-    Syntax.print_pl process
+    PiSyntax.print_pl process
   with
   | Parsing.Parse_error ->
      print_endline @@ app_name ^ ": Parse_error";

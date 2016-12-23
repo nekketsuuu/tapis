@@ -1,6 +1,7 @@
 {
+  open Error
   open Location
-  open Syntax
+  open PiSyntax
 }
 
 let digit = ['0'-'9']
