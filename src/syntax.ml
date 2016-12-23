@@ -229,15 +229,15 @@ and print_process p =
 	     (print_space ();
 	      print_pres body.x body.tyxo body.pl)
 	  | _ ->
-	     ())
+	     pl)
        in
        open_vbox tab_width;
        open_box 0;
-       print_pres body.x body.tyxo body.pl;
+       let pl = print_pres body.x body.tyxo body.pl in
        close_box ();
        print_cut ();
        open_box 0;
-       print_t' body.pl;
+       print_t' pl;
        close_box ();
        close_box ()
     | PIf(body) ->
