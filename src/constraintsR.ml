@@ -12,7 +12,7 @@ open Sbst
 let sbst (sigma : Type.region sbst) c =
   let sbst'' sigma r =
     try
-      snd @@ List.find (fun (sym, r) -> sym = r) sigma
+      List.assoc r sigma
     with
     | Not_found -> r
   in

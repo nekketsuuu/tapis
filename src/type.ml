@@ -54,7 +54,7 @@ let rec sbst (sigma : t sbst) t =
   | TVar(a) ->
      begin
        try
-	 snd @@ List.find (fun (sym, t) -> sym = a) sigma
+	 List.assoc a sigma
        with
        | Not_found -> TVar(a)
      end
