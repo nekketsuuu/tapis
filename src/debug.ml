@@ -10,7 +10,7 @@ and main () =
   try
     let process = Syntax.closure @@ parse () in
     Stype.infer process;
-    Syntax.print_t process
+    Syntax.print_pl process
   with
   | Parsing.Parse_error ->
      print_endline @@ app_name ^ ": Parse_error";

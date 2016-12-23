@@ -24,52 +24,52 @@ type name = string
  * too complicated.
  *)
 (* TODO(nekketsuuu): closedなので型アノテーションはPResにだけあればいいのでは *)
-type t = process location
+type pl = process location
 and process =
   | PNil
   | PIn   of pin_body
   | PRIn  of pin_body
   | POut  of { x: name;
 	       mutable tyxo: Type.t option;
-	       els: e list;
-	       pl: t; }
-  | PPar  of { pl1: t; pl2: t }
+	       els: el list;
+	       pl: pl; }
+  | PPar  of { pl1: pl; pl2: pl }
   | PRes  of { x: name;
 	       mutable tyxo: Type.t option;
-	       pl: t; }
-  | PIf   of { el: e; pl1: t; pl2: t }
+	       pl: pl; }
+  | PIf   of { el: el; pl1: pl; pl2: pl }
 and pin_body =
   { x:  name;
     ys: name list;
     mutable tyxo:  Type.t option;
     mutable tyyos: Type.t option list;
-    pl: t; }
-and e = expr location
+    pl: pl; }
+and el = expr location
 and expr =
   | EVar  of name
   | EUnit
   | EBool of bool
   | EInt  of int
-  | ENot  of e
-  | EAnd  of e * e
-  | EOr   of e * e
-  | ENeg  of e
-  | EAdd  of e * e
-  | ESub  of e * e
-  | EMul  of e * e
-  | EDiv  of e * e
-  | EEq   of e * e
-  | ELt   of e * e
-  | EGt   of e * e
-  | ELeq  of e * e
-  | EGeq  of e * e
+  | ENot  of el
+  | EAnd  of el * el
+  | EOr   of el * el
+  | ENeg  of el
+  | EAdd  of el * el
+  | ESub  of el * el
+  | EMul  of el * el
+  | EDiv  of el * el
+  | EEq   of el * el
+  | ELt   of el * el
+  | EGt   of el * el
+  | ELeq  of el * el
+  | EGeq  of el * el
 [@@deriving show]
 
 (*
  * utility functions
  *)
 
-(* free_name : t -> name list *)
+(* free_name : pl -> name list *)
 let rec free_name pl = free_name_b [] pl
 and free_name_b bounded_names pl =
   match pl.loc_val with
@@ -137,7 +137,7 @@ and diff names1 names2 =
     let names2' = List.tl names2 in
     diff (remove name names1) names2'
 
-(* closure : t -> name list *)
+(* closure : pl -> name list *)
 let closure pl =
   let free_names = free_name pl in
   let restrict pl name =
@@ -153,12 +153,12 @@ open Format
 
 let tab_width = 2
 
-let rec print_t pl =
+let rec print_pl pl =
   open_box tab_width;
-  print_t' pl;
+  print_pl' pl;
   close_box ();
   print_newline ();
-and print_t' pl =
+and print_pl' pl =
   print_process pl.loc_val
 and print_process p =
   begin
@@ -171,7 +171,7 @@ and print_process p =
        print_names body.ys;
        print_string ".";
        print_cut ();
-       print_t' body.pl;
+       print_pl' body.pl;
        close_box ()
     | PRIn(body) ->
        open_hovbox 3;
@@ -179,16 +179,16 @@ and print_process p =
        print_names body.ys;
        print_string ".";
        print_cut ();
-       print_t' body.pl;
+       print_pl' body.pl;
        print_string ")";
        close_box ()
     | POut(body) ->
        open_hovbox tab_width;
        print_string @@ body.x ^ "!";
-       print_es body.els;
+       print_els body.els;
        print_string ".";
        print_cut ();
-       print_t' body.pl;
+       print_pl' body.pl;
        close_box ()
     | PPar(body) ->
        let rec print_ppar pl1 pl2 =
@@ -197,14 +197,14 @@ and print_process p =
 	  | PPar(body) ->
 	     print_ppar body.pl1 body.pl2
 	  | _ ->
-	     print_t' pl1);
+	     print_pl' pl1);
 	 print_cut ();
 	 print_string "| ";
 	 (match pl2.loc_val with
 	  | PPar(body) ->
 	     print_ppar body.pl1 body.pl2
 	  | _ ->
-	     print_t' pl2);
+	     print_pl' pl2);
 	 close_box ();
        in
        open_box 1;
@@ -237,7 +237,7 @@ and print_process p =
        close_box ();
        print_cut ();
        open_box 0;
-       print_t' pl;
+       print_pl' pl;
        close_box ();
        close_box ()
     | PIf(body) ->
@@ -245,12 +245,12 @@ and print_process p =
        (* then clause *)
        open_vbox tab_width;
        print_string "if ";
-       print_e body.el;
+       print_el body.el;
        print_string " then";
        print_space ();
        close_box ();
        open_box 0;
-       print_t' body.pl1;
+       print_pl' body.pl1;
        close_box ();
        (* else clause *)
        print_space ();
@@ -258,7 +258,7 @@ and print_process p =
        print_string "else";
        print_space ();
        open_box 0;
-       print_t' body.pl2;
+       print_pl' body.pl2;
        close_box ();
        close_box ();
        close_box ()
@@ -282,7 +282,7 @@ and print_names' ys =
   | y :: ys ->
      print_string y;
      List.iter (fun y -> print_string ","; print_space (); print_string y;) ys
-and print_es els =
+and print_els els =
   let n = List.length els in
   if n = 0 then
     print_string "()"
@@ -291,26 +291,26 @@ and print_es els =
     match el.loc_val with
     | EVar(_) | EUnit | EBool(_) | EInt(_)
     | ENot(_) | ENeg(_) ->
-       print_e el
+       print_el el
     | _ ->
        (open_box 1;
 	print_string "(";
-	print_e el;
+	print_el el;
 	print_string ")";
 	close_box ())
   else
     (open_hovbox 1;
      print_string "(";
-     print_es' els;
+     print_els' els;
      print_string ")";
      close_box ())
-and print_es' els =
+and print_els' els =
   match els with
   | [] -> ()
   | el :: els ->
-     print_e el;
-     List.iter (fun el -> (print_string ","; print_space (); print_e el)) els
-and print_e el =
+     print_el el;
+     List.iter (fun el -> (print_string ","; print_space (); print_el el)) els
+and print_el el =
   print_expr el.loc_val
 and print_expr e =
   match e with
@@ -352,13 +352,13 @@ and print_unary_expr (op : string) el =
   open_box @@ String.length op + 1;
   print_string "(";
   print_string op;
-  print_e el;
+  print_el el;
   print_string ")";
   close_box ()
 and print_binary_expr (op : string) el1 el2 =
   open_box 0;
-  print_e el1;
+  print_el el1;
   print_string @@ " " ^ op;
   print_space ();
-  print_e el2;
+  print_el el2;
   close_box ()

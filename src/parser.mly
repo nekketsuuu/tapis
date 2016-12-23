@@ -37,7 +37,7 @@
 %right PIPE
 
 %start toplevel
-%type <Syntax.t> toplevel
+%type <Syntax.pl> toplevel
 %%
 
 toplevel:

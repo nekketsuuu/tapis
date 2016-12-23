@@ -8,7 +8,7 @@ open Sbst
 exception UnifyT of Type.t * Type.t
 exception UnifyR of Type.region * Type.region
 
-(* sprint_expr_error : Syntax.t -> Type.t -> Type.t -> string *)
+(* sprint_expr_error : Syntax.pl -> Type.t -> Type.t -> string *)
 let sprint_expr_error el actual_ty expected_ty =
   (* TODO(nekketsuuu): 型のpretty print *)
   (* TODO(nekketsuuu): print location *)
@@ -116,7 +116,7 @@ and eq_type_patterns ct cr tys1 tys2 =
      else
        (false, ct, cr)
 
-(* infer_expr : Env.key -> Syntax.e -> Type.e * ConstraintsT.t * ConstraintsR.t *)
+(* infer_expr : Env.key -> Syntax.el -> Type.t * ConstraintsT.t * ConstraintsR.t *)
 let rec infer_expr env el =
   match el.loc_val with
   | EVar(x) ->
@@ -195,7 +195,7 @@ and infer_binary_expr env el1 el2 tyin tyout =
   | _, _ ->
      raise @@ TypeErr(sprint_expr_error el1 ty1 tyin)
 
-(* infer_proc : Syntax.t -> Env.key -> ConstraintsT.t * ConstraintsR.t *)
+(* infer_proc : Syntax.pl -> Env.key -> ConstraintsT.t * ConstraintsR.t *)
 let rec infer_proc env pl =
   match pl.loc_val with
   | PNil ->
@@ -320,7 +320,7 @@ and infer_proc_input env body loc_start loc_end =
     let (ct, cr) = infer_proc env body.pl in
     (ConstraintsT.add (ty, ty') ct, cr)
 
-(* annotate : Type.t sbst -> Type.region sbst -> Syntax.t -> unit *)
+(* annotate : Type.t sbst -> Type.region sbst -> Syntax.pl -> unit *)
 let rec annotate sigmaT sigmaR pl =
   (* TODO *)
   match pl.loc_val with
@@ -372,7 +372,7 @@ and annotate_type (sigmaT : Type.t sbst) (sigmaR : Type.region sbst) ty =
 	 raise @@ TypeErr("Unexpected error at annotate_type: region is None"))
   | ty -> ty
 
-(* infer : Syntax.t -> unit *)
+(* infer : Syntax.pl -> unit *)
 let infer pl =
   let (ct, cr) = infer_proc Env.empty pl in
   try
