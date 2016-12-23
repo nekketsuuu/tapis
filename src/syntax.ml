@@ -78,12 +78,10 @@ and free_name_b bounded_names pl =
   | PRIn(body) ->
      let bounded_names' = union body.ys bounded_names in
      let free_names = free_name_b bounded_names' body.pl in
-     let free_names =
-       if List.mem body.x bounded_names then
-	 free_names
-       else
-	 add body.x free_names
-     in diff free_names body.ys
+     if List.mem body.x bounded_names then
+       free_names
+     else
+       add body.x free_names
   | POut(body) ->
      let names = List.fold_left
 		   (fun names el -> union names (name_expr el))
@@ -100,7 +98,7 @@ and free_name_b bounded_names pl =
      union (free_name_b bounded_names body.pl1)
 	   (free_name_b bounded_names body.pl2)
   | PRes(body) ->
-     remove body.x (free_name_b (add body.x bounded_names) body.pl)
+     free_name_b (add body.x bounded_names) body.pl
   | PIf(body) ->
      let names = name_expr body.el in
      let free_names = diff names bounded_names in
