@@ -117,7 +117,7 @@ and eq_type_patterns ct cr tys1 tys2 =
      else
        (false, ct, cr)
 
-(* infer_expr : Env.key -> PiSyntax.el -> Type.t * ConstraintsT.t * ConstraintsR.t *)
+(* infer_expr : Type.t Env.t -> PiSyntax.el -> Type.t * ConstraintsT.t * ConstraintsR.t *)
 let rec infer_expr env el =
   match el.loc_val with
   | EVar(x) ->
@@ -196,7 +196,7 @@ and infer_binary_expr env el1 el2 tyin tyout =
   | _, _ ->
      raise @@ TypeErr(sprint_expr_error el1 ty1 tyin)
 
-(* infer_proc : PiSyntax.pl -> Env.key -> ConstraintsT.t * ConstraintsR.t *)
+(* infer_proc : Type.t Env.t -> PiSyntax.pl -> ConstraintsT.t * ConstraintsR.t *)
 let rec infer_proc env pl =
   match pl.loc_val with
   | PNil ->
