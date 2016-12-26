@@ -322,9 +322,9 @@ and print_expr e =
   | ENeg(el) ->
      print_unary_expr "-" el
   | EAnd(el1, el2) ->
-     print_binary_expr "and" el1 el2
+     print_binary_expr "&&" el1 el2
   | EOr(el1, el2) ->
-     print_binary_expr "or" el1 el2
+     print_binary_expr "||" el1 el2
   | EAdd(el1, el2) ->
      print_binary_expr "+" el1 el2
   | ESub(el1, el2) ->
