@@ -172,7 +172,7 @@ expr:
 ;
 
 comp_expr:
-    | mult_expr
+    | add_expr
         { $1 }
     | comp_expr EQ comp_expr
         { annot_loc @@ EEq($1, $3) }
@@ -186,24 +186,24 @@ comp_expr:
         { annot_loc @@ EGeq($1, $3) }
 ;
 
-mult_expr:
-    | add_expr
-        { $1 }
-    | add_expr AST mult_expr
-        { annot_loc @@ EMul($1, $3) }
-    | mult_expr DIV mult_expr
-        { annot_loc @@ EDiv($1, $3) }
-;
-
 add_expr:
-    | atomic_expr
+    | mult_expr
         { $1 }
     | add_expr PLUS add_expr
         { annot_loc @@ EAdd($1, $3) }
-    | atomic_expr MINUS add_expr
+    | mult_expr MINUS add_expr
         { annot_loc @@ ESub($1, $3) }
     | MINUS atomic_expr
         { annot_loc @@ ENeg($2) }
+;
+
+mult_expr:
+    | atomic_expr
+        { $1 }
+    | atomic_expr AST mult_expr
+        { annot_loc @@ EMul($1, $3) }
+    | mult_expr DIV mult_expr
+        { annot_loc @@ EDiv($1, $3) }
 ;
 
 atomic_expr:

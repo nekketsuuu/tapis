@@ -351,9 +351,11 @@ and print_unary_expr (op : string) el =
   print_string ")";
   close_box ()
 and print_binary_expr (op : string) el1 el2 =
-  open_box 0;
+  open_box 1;
+  print_string "(";
   print_el el1;
   print_string @@ " " ^ op;
   print_space ();
   print_el el2;
+  print_string ")";
   close_box ()
