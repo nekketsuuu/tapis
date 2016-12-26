@@ -383,3 +383,5 @@ let infer pl =
   with
   | UnifyT(ty1, ty2) ->
      raise @@ TypeErr("TODO(nekketsuuu): type unify error")
+  | UnifyR(r1, r2) ->
+     raise @@ TypeErr("TODO(nekketsuuu): region unify error")
