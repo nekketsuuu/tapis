@@ -19,6 +19,7 @@ type name = string
  * too complicated.
  *)
 (* TODO(nekketsuuu): closedなので型アノテーションはPResにだけあればいいのでは *)
+(*                   とはいえ、一度アノテートしておけばenv-lessに作れるのでいいのかも *)
 type pl = process location
 and process =
   | PNil
@@ -112,7 +113,7 @@ and name_expr el =
   | EEq(e1, e2) | ELt(e1, e2) | EGt(e1, e2) | ELeq(e1, e2) | EGeq(e1, e2) ->
      union (name_expr e1) (name_expr e2)
 (* utility functions for using a list as a set *)
-and remove x names = List.filter (fun name -> name != x) names
+and remove x names = List.filter (fun name -> name <> x) names
 and add x names =
   if List.mem x names then names
   else x :: names
@@ -351,6 +352,7 @@ and print_unary_expr (op : string) el =
   print_string ")";
   close_box ()
 and print_binary_expr (op : string) el1 el2 =
+  (* TODO(nekketsuuu): もっと括弧まわりを綺麗に表示する *)
   open_box 1;
   print_string "(";
   print_el el1;

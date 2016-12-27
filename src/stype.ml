@@ -35,8 +35,8 @@ let rec sprint_error_chan_args x els actual_tys expected_tys =
      Printf.sprintf
        "The number of channel arguments of %s is less than expected"
        x
-  (* TODO(nekketsuuu): aty != ety じゃなくて形で判断させたい *)
-  | (aty :: atys), (ety :: etys) when aty != ety ->
+  (* TODO(nekketsuuu): aty <> ety じゃなくて形で判断させたい *)
+  | (aty :: atys), (ety :: etys) when aty <> ety ->
      Printf.sprintf
        "Channel arguments %s has type %s but an expression was expected of type %s"
        (PiSyntax.show_expr (List.hd els).loc_val)
