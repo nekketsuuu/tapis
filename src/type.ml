@@ -30,13 +30,13 @@ let gensym_region () =
 (* contain : string -> t -> bool *)
 let rec contain a t =
   match t with
-  | TChan(l, [], r) ->
+  | TChan(_, [], _) ->
      false
-  | TChan(l, ty :: tys, r) ->
+  | TChan(lo, ty :: tys, ro) ->
      if contain a ty then
        true
      else
-       contain a (TChan(l, tys, r))
+       contain a (TChan(lo, tys, ro))
   | TVar(a') when a' = a ->
      true
   | _ ->
@@ -50,7 +50,7 @@ let rec sbst (sigma : t sbst) t =
   | TUnit -> TUnit
   | TBool -> TBool
   | TInt -> TInt
-  | TChan(l, tys, r) -> TChan(l, List.map (sbst sigma) tys, r)
+  | TChan(lo, tys, ro) -> TChan(lo, List.map (sbst sigma) tys, ro)
   | TVar(a) ->
      begin
        try
