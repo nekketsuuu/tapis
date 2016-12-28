@@ -1,8 +1,8 @@
 #use "topfind"
 #require "ppx_deriving.std"
 #mod_use "error.ml";;
-#mod_use "sbst.ml";;
 #mod_use "type.ml";;
+#mod_use "sbst.ml";;
 #mod_use "location.ml";;
 #mod_use "piSyntax.ml";;
 #mod_use "parser.ml";;
@@ -11,4 +11,7 @@
 #mod_use "constraintsT.ml";;
 #mod_use "constraintsR.ml";;
 #mod_use "stype.ml";;
+#mod_use "constraintsL.ml";;
+#mod_use "seqSyntax.ml";;
+#mod_use "ttype.ml";;
 #mod_use "debug.ml";;

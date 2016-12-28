@@ -11,7 +11,10 @@ and main () =
   try
     let process = PiSyntax.closure @@ parse () in
     Stype.infer process;
-    PiSyntax.print_pl process
+    let whole_program = Ttype.infer process in
+    PiSyntax.print_pl process;
+    print_newline ();
+    SeqSyntax.print_program whole_program
   with
   | Parsing.Parse_error ->
      print_endline @@ app_name ^ ": Parse_error";
@@ -19,7 +22,8 @@ and main () =
   | LexErr(str)
   | ParseErr(str)
   | EvalErr(str)
-  | TypeErr(str) ->
+  | TypeErr(str)
+  | ConvErr(str) ->
      print_endline @@ app_name ^ ": " ^ str;
      flush stdout
 and parse () =

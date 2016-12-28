@@ -1,5 +1,9 @@
-type level = int
+type level =
+  | LInt of int
+  | LVar of string
 [@@deriving show]
+
+let min_level = 1
 
 type region = string
 [@@deriving show]
@@ -23,9 +27,21 @@ let rec gensym_type_list n =
 
 let _region_i = ref 0
 let gensym_region () =
-  let name = "r" ^ string_of_int (!_region_i) in
+  let name = "'r" ^ string_of_int (!_region_i) in
   _region_i := !_region_i + 1;
   name
+
+let _level_i = ref 0
+let gensym_level () =
+  let name = "'l" ^ string_of_int (!_level_i) in
+  _level_i := !_level_i + 1;
+  name
+
+(* is_chan : t -> bool *)
+let is_chan ty =
+  match ty with
+  | TChan(_) -> true
+  | _ -> false
 
 (* contain : string -> t -> bool *)
 let rec contain a t =
@@ -42,10 +58,8 @@ let rec contain a t =
   | _ ->
      false
 
-open Sbst
-
 (* sbst : t sbst -> t -> t *)
-let rec sbst (sigma : t sbst) t =
+let rec sbst sigma t =
   match t with
   | TUnit -> TUnit
   | TBool -> TBool
@@ -67,7 +81,10 @@ open Format
 
 let print_level_option lo =
   match lo with
-  | Some(l) -> print_string @@ "(" ^ string_of_int l ^ ")"
+  | Some(l) ->
+     (match l with
+      | LInt(i) -> print_string @@ "(" ^ string_of_int i ^ ")"
+      | LVar(x) -> print_string @@ "(" ^ x ^ ")")
   | None    -> ()
 let print_region_option ro =
   match ro with
