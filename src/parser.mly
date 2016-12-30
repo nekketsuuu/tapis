@@ -181,7 +181,7 @@ non_mul_expr:
     | non_mul_expr OR non_mul_expr
 	{ annot_loc @@ EOr($1, $3) }
     | non_mul_expr PLUS non_mul_expr
-	{ annot_loc @@ EAnd($1, $3) }
+	{ annot_loc @@ EAdd($1, $3) }
     | non_mul_expr MINUS non_mul_expr
 	{ annot_loc @@ ESub($1, $3) }
     | non_mul_expr DIV non_mul_expr
