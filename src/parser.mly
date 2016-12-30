@@ -31,10 +31,11 @@
 %left NOT
 %left AND OR
 %left EQ LT GT LEQ GEQ
-%left PLUS
-%nonassoc MINUS
+%left PLUS MINUS
 %left DIV
 %nonassoc AST
+%right prec_unary_minus
+%left prec_expr
 %right PIPE
 
 %start toplevel
@@ -161,49 +162,40 @@ exprs_list_non_empty:
 ;
 
 expr:
-    | comp_expr
+    | non_mul_expr
 	{ $1 }
-    | NOT expr
-	{ annot_loc @@ ENot($2) }
-    | expr AND expr
-	{ annot_loc @@ EAnd($1, $3) }
-    | expr OR expr
-	{ annot_loc @@ EOr($1, $3) }
-;
+    | non_mul_expr AST expr
+	{ annot_loc @@ EMul($1, $3) }
 
-comp_expr:
-    | add_expr
-        { $1 }
-    | comp_expr EQ comp_expr
-        { annot_loc @@ EEq($1, $3) }
-    | comp_expr LT comp_expr
-        { annot_loc @@ ELt($1, $3) }
-    | comp_expr GT comp_expr
-        { annot_loc @@ EGt($1, $3) }
-    | comp_expr LEQ comp_expr
-        { annot_loc @@ ELeq($1, $3) }
-    | comp_expr GEQ comp_expr
-        { annot_loc @@ EGeq($1, $3) }
-;
-
-add_expr:
-    | mult_expr
-        { $1 }
-    | add_expr PLUS add_expr
-        { annot_loc @@ EAdd($1, $3) }
-    | mult_expr MINUS add_expr
-        { annot_loc @@ ESub($1, $3) }
-    | MINUS atomic_expr
-        { annot_loc @@ ENeg($2) }
-;
-
-mult_expr:
+non_mul_expr:
     | atomic_expr
-        { $1 }
-    | atomic_expr AST mult_expr
-        { annot_loc @@ EMul($1, $3) }
-    | mult_expr DIV mult_expr
-        { annot_loc @@ EDiv($1, $3) }
+	{ $1 }
+    | NOT non_mul_expr
+      %prec prec_expr
+	{ annot_loc @@ ENot($2) }
+    | MINUS non_mul_expr
+      %prec prec_unary_minus
+	{ annot_loc @@ ENeg($2) }
+    | non_mul_expr AND non_mul_expr
+	{ annot_loc @@ EAnd($1, $3) }
+    | non_mul_expr OR non_mul_expr
+	{ annot_loc @@ EOr($1, $3) }
+    | non_mul_expr PLUS non_mul_expr
+	{ annot_loc @@ EAnd($1, $3) }
+    | non_mul_expr MINUS non_mul_expr
+	{ annot_loc @@ ESub($1, $3) }
+    | non_mul_expr DIV non_mul_expr
+	{ annot_loc @@ EDiv($1, $3) }
+    | non_mul_expr EQ non_mul_expr
+	{ annot_loc @@ EEq($1, $3) }
+    | non_mul_expr LT non_mul_expr
+	{ annot_loc @@ ELt($1, $3) }
+    | non_mul_expr GT non_mul_expr
+	{ annot_loc @@ EGt($1, $3) }
+    | non_mul_expr LEQ non_mul_expr
+	{ annot_loc @@ ELeq($1, $3) }
+    | non_mul_expr GEQ non_mul_expr
+	{ annot_loc @@ EGeq($1, $3) }
 ;
 
 atomic_expr:
