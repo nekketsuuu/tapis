@@ -101,7 +101,8 @@ let rec eq_type_pattern ct cr ty1 ty2 =
   | TBool, TBool
   | TInt, TInt ->
      (true, ct, cr)
-  | TVar(_), TVar(_) ->
+  | TVar(_), _
+  | _, TVar(_) ->
      (true, ConstraintsT.add (ty1, ty2) ct, cr)
   | _, _ ->
      (false, ct, cr)
