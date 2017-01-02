@@ -197,7 +197,6 @@ and infer_binary_expr env el1 el2 tyin tyout =
   | _, _ ->
      raise @@ TypeErr(sprint_expr_error el1 ty1 tyin)
 
-(* TODO(nekketsuuu): 型註釈をresだけにする *)
 (* infer_proc : Type.t Env.t -> PiSyntax.pl -> ConstraintsT.t * ConstraintsR.t *)
 let rec infer_proc env pl =
   match pl.loc_val with
@@ -227,7 +226,6 @@ let rec infer_proc env pl =
 		  (fun (ct, cr) tycc -> (ConstraintsT.union (snd tycc) ct,
 					 ConstraintsR.union (trd tycc) cr))
 		  (ct', cr') tyccs in
-	      body.tyxo <- Some(ty);
 	      let (ct, cr) = infer_proc env body.pl in
 	      (ConstraintsT.union ct ct',
 	       ConstraintsR.union cr cr')
@@ -244,28 +242,15 @@ let rec infer_proc env pl =
 	      (fun (ct, cr) tycc -> (ConstraintsT.union (snd tycc) ct,
 				     ConstraintsR.union (trd tycc) cr))
 	      (ct, cr) tyccs in
-	  body.tyxo <- Some(ty);
 	  (ConstraintsT.add (ty, TChan(None, tys, Some(gensym_region ()))) ct,
 	   cr)
        | _ ->
 	  raise @@ TypeErr(sprint_expr_error_chan (pack @@ EVar(body.x)) ty)
      else
-       (* Compose constraints *)
-       let tyccs = List.map (infer_expr env) body.els in
-       let tys = List.map fst tyccs in
-       let ct1 = List.fold_left (fun ct1 ct2 -> ConstraintsT.union ct1 ct2)
-				ConstraintsT.empty
-				(List.map snd tyccs) in
-       let cr1 = List.fold_left (fun cr1 cr2 -> ConstraintsR.union cr1 cr2)
-				ConstraintsR.empty
-				(List.map trd tyccs) in
-       let ty = TVar(gensym_type ()) in
-       let ty' = TChan(None, tys, Some(gensym_region ())) in
-       let env = Env.add body.x ty' env in
-       body.tyxo <- Some(ty);
-       let (ct2, cr2) = infer_proc env body.pl in
-       (ConstraintsT.add (ty, ty') (ConstraintsT.union ct1 ct2),
-	ConstraintsR.union cr1 cr2)
+       (* TODO(nekketsuuu): location *)
+       raise @@ TypeErr(Printf.sprintf
+			  "Input process is not closed. The name %s is free."
+			  body.x)
   | PPar(body) ->
      let (ct1, cr1) = infer_proc env body.pl1 in
      let (ct2, cr2) = infer_proc env body.pl2 in
@@ -296,8 +281,6 @@ and infer_proc_input env body loc_start loc_end =
        let env = List.fold_left2
 		   (fun env y ty -> Env.add y ty env)
 		   env body.ys tys in
-       body.tyxo <- Some(ty);
-       body.tyyos <- List.map (fun ty -> Some(ty)) tys;
        infer_proc env body.pl
     | TVar(a) ->
        let tys = List.map (fun _ -> TVar(gensym_type ())) body.ys in
@@ -306,35 +289,24 @@ and infer_proc_input env body loc_start loc_end =
        let env = List.fold_left2
 		   (fun env y ty -> Env.add y ty env)
 		   env body.ys tys in
-       body.tyxo <- Some(ty);
-       body.tyyos <- List.map (fun ty -> Some(ty)) tys;
        let (ct, cr) = infer_proc env body.pl in
        (ConstraintsT.add (ty, ty') ct, cr)
     | _ ->
        raise @@ TypeErr(sprint_expr_error_chan (pack @@ EVar(body.x)) ty)
   else
-    let ty = TVar(gensym_type ()) in
-    let tys = List.map (fun _ -> TVar(gensym_type ())) body.ys in
-    let ty' = TChan(None, tys, Some(gensym_region ())) in
-    let env = Env.add body.x ty' env in
-    let env = List.fold_left2
-		(fun env y ty -> Env.add y ty env)
-		env body.ys tys in
-    let (ct, cr) = infer_proc env body.pl in
-    (ConstraintsT.add (ty, ty') ct, cr)
+    (* TODO(nekketsuuu): location *)
+    raise @@ TypeErr(Printf.sprintf
+		       "Input process is not closed. The name %s is free."
+		       body.x)
 
 (* annotate : Type.t sbst -> Type.region sbst -> PiSyntax.pl -> unit *)
 let rec annotate sigmaT sigmaR pl =
-  (* TODO *)
   match pl.loc_val with
   | PNil -> ()
   | PIn(body)
   | PRIn(body) ->
-     body.tyxo <- annotate_type_option sigmaT sigmaR body.tyxo;
-     body.tyyos <- List.map (annotate_type_option sigmaT sigmaR) body.tyyos;
      annotate sigmaT sigmaR body.pl
   | POut(body) ->
-     body.tyxo <- annotate_type_option sigmaT sigmaR body.tyxo;
      annotate sigmaT sigmaR body.pl
   | PRes(body) ->
      body.tyxo <- annotate_type_option sigmaT sigmaR body.tyxo;

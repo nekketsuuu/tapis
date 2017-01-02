@@ -103,11 +103,8 @@ let rec annotate_level sbst pl =
   | PNil -> ()
   | PIn(body)
   | PRIn(body) ->
-     body.tyxo <- get_type sbst body.tyxo;
-     body.tyyos <- List.map (get_type sbst) body.tyyos;
      annotate_level sbst body.pl
   | POut(body) ->
-     body.tyxo <- get_type sbst body.tyxo;
      annotate_level sbst body.pl
   | PPar(body) ->
      annotate_level sbst body.pl1;

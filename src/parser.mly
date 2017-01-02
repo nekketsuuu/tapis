@@ -82,15 +82,11 @@ rin_process:
 	{ $1 }
     | AST ID QUESTION chans PERIOD rin_process
 	{ annot_loc @@ PRIn({ x     = $2;
-	                      tyxo  = None;
 	                      ys    = $4;
-                              tyyos = make_types $4;
 	                      pl    = $6;            }) }
     | AST ID QUESTION chans
 	{ annot_loc @@ PRIn({ x     = $2;
-	                      tyxo  = None;
 	                      ys    = $4;
-                              tyyos = make_types $4;
 	                      pl    = dummy_proc;    }) }
 ;
 
@@ -99,24 +95,18 @@ inout_process:
 	{ $1 }
     | ID QUESTION chans PERIOD inout_process
 	{ annot_loc @@ PIn({ x     = $1;
-	                     tyxo  = None;
 	                     ys    = $3;
-                             tyyos = make_types $3;
 	                     pl    = $5;            }) }
     | ID EXCLAMATION exprs PERIOD inout_process
 	{ annot_loc @@ POut({ x    = $1;
-	                      tyxo = None;
 	                      els  = $3;
 	                      pl   = $5;   }) }
     | ID QUESTION chans
 	{ annot_loc @@ PIn({ x     = $1;
-	                     tyxo  = None;
 	                     ys    = $3;
-                             tyyos = make_types $3;
 	                     pl    = dummy_proc;    }) }
     | ID EXCLAMATION exprs
 	{ annot_loc @@ POut({ x    = $1;
-	                      tyxo = None;
 	                      els  = $3;
 	                      pl   = dummy_proc; }) }
 ;

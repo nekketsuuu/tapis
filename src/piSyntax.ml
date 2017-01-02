@@ -18,15 +18,16 @@ type name = string
  * recursive module etc., I avoid making types
  * too complicated.
  *)
-(* TODO(nekketsuuu): closedなので型アノテーションはPResにだけあればいいのでは *)
-(*                   とはいえ、一度アノテートしておけばenv-lessに作れるのでいいのかも *)
+(*
+ * Only PRes has a type annotation
+ * since we assume the input process is closed
+ *)
 type pl = process location
 and process =
   | PNil
   | PIn   of pin_body
   | PRIn  of pin_body
   | POut  of { x: name;
-	       mutable tyxo: Type.t option;
 	       els: el list;
 	       pl: pl; }
   | PPar  of { pl1: pl; pl2: pl }
@@ -37,8 +38,6 @@ and process =
 and pin_body =
   { x:  name;
     ys: name list;
-    mutable tyxo:  Type.t option;
-    mutable tyyos: Type.t option list;
     pl: pl; }
 and el = expr location
 and expr =
