@@ -25,7 +25,11 @@ let verify tool_cmd temp_filename temp_outchan lexbuf =
     print_flush ();
     close_out temp_outchan;
     (* TODO(nekketsuuu): ここのtool_cmdはquoteしなくてよい？ *)
-    let seqterm = tool_cmd ^ " " ^ (Filename.quote temp_filename) in
+    let seqterm = tool_cmd ^ " " ^ (Filename.quote temp_filename) ^
+		    (* TODO(nekketsuuu): これで良いかチェックする *)
+		    (if Sys.unix || Sys.cygwin then " > /dev/null"
+		     else " > NUL")
+    in
     let seqterm_exit_code = Sys.command seqterm in
     (* success? *)
     let is_term =
