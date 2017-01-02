@@ -222,7 +222,7 @@ let rec infer_proc env pl =
 					       tys tys' in
 	  if b then
 	    begin
-	      let (ct', cr') = 
+	      let (ct', cr') =
 		List.fold_left
 		  (fun (ct, cr) tycc -> (ConstraintsT.union (snd tycc) ct,
 					 ConstraintsR.union (trd tycc) cr))

@@ -142,7 +142,7 @@ and printC_def (f, tyo, xs, body) =
       Type.print_t ty;
       print_space ();
       print_string "*/");
-  close_box (); 
+  close_box ();
   print_cut ();
   open_vbox tab_width;
   open_hbox ();

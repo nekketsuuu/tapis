@@ -93,7 +93,7 @@ let print_region_option ro =
 
 let rec print_t ty =
   open_box 1;
-  begin 
+  begin
     match ty with
     | TChan(lo, tys, ro) ->
        print_string "#";
