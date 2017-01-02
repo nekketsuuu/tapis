@@ -9,7 +9,13 @@ type var = string
 [@@deriving show]
 
 type program = def list * body
-and def = var * Type.t option * var list * body
+and def = var * Type.t option * (var * Type.t) list * body
+(*
+ * (funcion name,
+ *  type of original replicated channel (if exists),
+ *  symbols and types of arguments,
+ *  function body)
+ *)
 and body =
   | SSkip
   | SSbst of var * Type.t * expr
@@ -112,18 +118,24 @@ let rec printC_program (defs, body) =
   print_cut ();
   close_box ();
   print_flush ();
+and printC_xty x ty =
+  (match ty with
+   | TInt -> print_string "int"
+   | TBool -> print_string "bool"
+   | _ -> raise @@ ConvErr("printC_xty: Type of " ^ x ^ " is not int either bool"));
+  print_string @@ " " ^ x
 and printC_defs defs =
   open_vbox 0;
   List.iter
-    (fun (f, tyo, xs, body) ->
+    (fun (f, tyo, xtys, body) ->
      open_box tab_width;
      print_string @@ "void " ^ f ^ " (";
      (* TODO(nekketsuuu): 型をあわせる *)
-     (match xs with
+     (match xtys with
       | [] -> ()
-      | x :: xs ->
-	 print_string "int";
-	 List.iter (fun _ -> print_string ", int") xs);
+      | (x, ty) :: xtys ->
+	 printC_xty x ty;
+	 List.iter (fun (x, ty) -> print_string ", "; printC_xty x ty) xtys);
      print_string ");";
      close_box();
      print_space ())
@@ -131,7 +143,7 @@ and printC_defs defs =
   print_space ();
   close_box ();
   List.iter printC_def defs
-and printC_def (f, tyo, xs, body) =
+and printC_def (f, tyo, xtys, body) =
   open_vbox 0;
   open_hbox ();
   (match tyo with
@@ -147,13 +159,13 @@ and printC_def (f, tyo, xs, body) =
   open_vbox tab_width;
   open_hbox ();
   print_string @@ "void " ^ f ^ "(";
-  printC_vars xs;
+  printC_vars xtys;
   print_string ") {";
   close_box ();
   print_cut ();
   (if body <> SSkip then
      (open_box 0;
-      printC_body xs body;
+      printC_body (List.map fst xtys) body;
       close_box ();
       print_cut ()));
   print_string "return;";
@@ -163,12 +175,16 @@ and printC_def (f, tyo, xs, body) =
   print_cut ();
   print_cut ();
   close_box ();
-and printC_vars xs =
-  match xs with
+and printC_vars xtys =
+  match xtys with
   | [] -> ()
-  | x :: xs ->
-     print_string x;
-     List.iter (fun x -> print_string ","; print_space (); print_string x) xs
+  | (x, ty) :: xtys ->
+     printC_xty x ty;
+     List.iter
+       (fun (x, ty) -> print_string ",";
+		       print_space ();
+		       printC_xty x ty)
+       xtys
 (* Note: no newline after printing *)
 and printC_body bounded_vars body =
   ignore @@ printC_body' bounded_vars body

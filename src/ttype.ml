@@ -158,12 +158,6 @@ let rec to_list defs =
  * program transformation
  *)
 
-(* generate_args : int -> var list *)
-let rec generate_args n =
-  if n <= 0 then []
-  else
-    ("y" ^ string_of_int n) :: (generate_args @@ n-1)
-
 (* transform : Env.t -> int -> PiSyntax.pl -> Defs.t * SeqSyntax.body *)
 (* We assume that each type in pl is already annotated correctly *)
 let rec transform env level pl =
@@ -194,7 +188,15 @@ let rec transform env level pl =
 	 | TChan(Some(LInt(i)), tys, _) ->
 	    let env = Env.add_list body.ys tys env in
 	    let (defs, prog) = transform env i body.pl in
-	    (Defs.add (ty, body.ys, sbst_nondet env body.ys prog) defs,
+	    (Defs.add (ty,
+		       List.fold_right2
+			 (fun y ty ys -> if ty = TBool || ty = TInt then y :: ys
+					 else ys)
+			 body.ys
+			 tys
+			 [],
+		       sbst_nondet env body.ys prog)
+		      defs,
 	     SSkip)
 	 | _ ->
 	    raise @@ ConvErr("transform: Not a well-typed channel")
@@ -219,6 +221,11 @@ let rec transform env level pl =
 		(defs, SSeq(SApp(f, es), prog))
 	      else
 		(* TODO(nekketsuuu): 効率化 *)
+		let rec generate_args n =
+		  if n <= 0 then []
+		  else
+		    ("y" ^ string_of_int n) :: (generate_args @@ n-1)
+		in
 		(Defs.add (ty, generate_args @@ List.length es, SSkip) defs,
 		 SSeq(SApp(f, es), prog))
 	    else
@@ -251,6 +258,7 @@ let rec transform env level pl =
      let (defs1, prog1) = transform env level body.pl1 in
      let (defs2, prog2) = transform env level body.pl2 in
      (Defs.union defs1 defs2, SIf(e, prog1, prog2))
+(* TODO(nekketsuuu): 関数引数のsbstについてちゃんと考える *)
 (* sbst_nondet : Env.t -> name list -> SeqSyntax.body -> SeqSyntax.body *)
 and sbst_nondet env ys cont_prog =
   match ys with
@@ -266,7 +274,6 @@ and sbst_nondet env ys cont_prog =
        | TInt ->
 	  SSeq(SSbst(y, ty, ENDInt), sbst_nondet env ys cont_prog)
        | TUnit ->
-	  (* TODO(nekketsuuu): これでいい? *)
 	  sbst_nondet env ys cont_prog
        | TVar(_) ->
 	  raise @@ ConvErr("sbst_nondet: a type variable remains")
@@ -380,18 +387,38 @@ let rec make_whole_program defs body =
 and make_defs defs =
   if Defs.is_empty defs then []
   else
-    let (ty, _, _) = Defs.choose defs in
+    (* Pick a def *)
+    let (ty, args, _) = Defs.choose defs in
+    (* Gather all functions whose type is ty *)
     let funcs = Defs.filter (fun (ty', _, _) -> ty' = ty) defs in
     let defs = Defs.diff defs funcs in
     let funcs_list = to_list funcs in
-    let n = List.length @@ (fun (_, ys, _) -> ys) @@ Defs.choose funcs in
-    let args = generate_args n in
-    let fsym = make_funcsym ty in
+    (* Construct function definitions *)
+    let fsym = SeqSyntax.make_funcsym ty in
+    let xtys = make_xtys args ty in
     let n = List.length funcs_list in
-    let parent_def = (fsym, Some(ty), args,
+    let parent_def = (fsym, Some(ty), xtys,
 		      make_parent_body fsym args n) in
-    let local_defs = make_local_defs fsym funcs_list n in
+    let local_defs = make_local_defs fsym funcs_list ty n in
     parent_def :: local_defs @ make_defs defs
+and make_xtys args ty =
+  match ty with
+  | TChan(_, tys, _) ->
+     let tys = List.fold_right
+		 (fun ty tys -> if ty = TInt || ty = TBool then ty :: tys
+				else tys)
+		 tys
+		 []
+     in
+     begin
+       try
+	 List.combine args tys
+       with
+       | Invalid_argument(_) ->
+	  raise @@ ConvErr("make_xty: length of args <> length of tys")
+     end
+  | _ ->
+     raise @@ ConvErr("make_xty: Not a channel type")
 and make_parent_body fsym args n : SeqSyntax.body =
   if n <= 0 then SSkip
   else if n = 1 then
@@ -400,15 +427,15 @@ and make_parent_body fsym args n : SeqSyntax.body =
     SNDet(SApp(fsym ^ "_" ^ string_of_int n,
 	       List.map (fun y -> EVar(y)) args),
 	  make_parent_body fsym args (n-1))
-and make_local_defs fsym funcs_list n : def list =
+and make_local_defs fsym funcs_list ty n : def list =
   if n <= 0 then []
   else
     let (_, local_args, local_body) = List.hd funcs_list in
     let def = (fsym ^ "_" ^ string_of_int n,
 	       None,
-	       local_args,
+	       make_xtys local_args ty,
 	       local_body) in
-    def :: make_local_defs fsym (List.tl funcs_list) (n-1)
+    def :: make_local_defs fsym (List.tl funcs_list) ty (n-1)
 
 (*
  * main function
