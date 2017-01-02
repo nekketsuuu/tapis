@@ -11,7 +11,7 @@
 ._d
 
 # binary
-/src/main
+main
 
 # Backup files
 *~

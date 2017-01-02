@@ -7,7 +7,7 @@ SOURCES = \
   env.ml constraintsT.ml constraintsR.ml stype.ml \
   constraintsL.ml seqSyntax.ml ttype.ml \
   main.ml
-RESULT = main
+RESULT = ../main
 
 all: byte-code byte-code-library
 

@@ -197,6 +197,7 @@ and infer_binary_expr env el1 el2 tyin tyout =
   | _, _ ->
      raise @@ TypeErr(sprint_expr_error el1 ty1 tyin)
 
+(* TODO(nekketsuuu): 型註釈をresだけにする *)
 (* infer_proc : Type.t Env.t -> PiSyntax.pl -> ConstraintsT.t * ConstraintsR.t *)
 let rec infer_proc env pl =
   match pl.loc_val with

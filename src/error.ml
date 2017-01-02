@@ -1,3 +1,4 @@
+(* TODO(nekketsuuu): こんなにエラーの種類いらなさそう *)
 exception LexErr of string
 exception ParseErr of string
 exception EvalErr of string

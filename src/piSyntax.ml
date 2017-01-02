@@ -153,7 +153,6 @@ let rec print_pl pl =
   open_box tab_width;
   print_pl' pl;
   close_box ();
-  print_newline ();
 and print_pl' pl =
   print_process pl.loc_val
 and print_process p =

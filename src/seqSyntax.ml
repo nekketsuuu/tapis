@@ -82,6 +82,9 @@ let tab_width = 4
 
 let rec printC_program (defs, body) =
   open_vbox 0;
+  print_string "int nondet();";
+  print_cut ();
+  print_cut ();
   print_string "typedef int bool;";
   print_cut ();
   print_string "bool true = 1;";
@@ -110,6 +113,23 @@ let rec printC_program (defs, body) =
   close_box ();
   print_flush ();
 and printC_defs defs =
+  open_vbox 0;
+  List.iter
+    (fun (f, tyo, xs, body) ->
+     open_box tab_width;
+     print_string @@ "void " ^ f ^ " (";
+     (* TODO(nekketsuuu): 型をあわせる *)
+     (match xs with
+      | [] -> ()
+      | x :: xs ->
+	 print_string "int";
+	 List.iter (fun _ -> print_string ", int") xs);
+     print_string ");";
+     close_box();
+     print_space ())
+    defs;
+  print_space ();
+  close_box ();
   List.iter printC_def defs
 and printC_def (f, tyo, xs, body) =
   open_vbox 0;
@@ -151,7 +171,7 @@ and printC_vars xs =
      List.iter (fun x -> print_string ","; print_space (); print_string x) xs
 (* Note: no newline after printing *)
 and printC_body bounded_vars body =
-  ignore @@ printC_body' [] body
+  ignore @@ printC_body' bounded_vars body
 (* printC_body' : var list -> body -> var list *)
 and printC_body' bounded_vars body =
   match body with
@@ -206,8 +226,10 @@ and printC_body' bounded_vars body =
      open_vbox tab_width;
      open_hbox ();
      print_string "if ";
+     print_string "(";
      printC_expr e;
-     print_string "{";
+     print_string ")";
+     print_string " {";
      close_box ();
      print_cut ();
      printC_body bounded_vars prog1;
