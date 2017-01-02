@@ -286,10 +286,13 @@ and transform_els env els =
        | EVar(x) ->
 	  begin
 	    try
-	      if Env.find x env = TUnit then
-		transform_els env els
-	      else
-		(transform_el env el) :: (transform_els env els)
+	      let ty = Env.find x env in
+	      match ty with
+	      | TChan(_)
+	      | TUnit ->
+		 transform_els env els
+	      | _ ->
+		 (transform_el env el) :: (transform_els env els)
 	    with
 	    | Not_found ->
 	       raise @@ ConvErr("transform_els: variable " ^ x ^
