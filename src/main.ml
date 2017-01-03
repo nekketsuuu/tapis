@@ -9,7 +9,7 @@ let print_error str =
   print_endline @@ app_name ^ ": " ^ str;
   print_flush ()
 
-(* verify : string -> string -> out_channel -> Lexing.from_channel -> unit *)
+(* verify : string -> string -> out_channel -> Lexing.from_channel -> int *)
 (* temp_outchan is closed in this function *)
 let verify tool_cmd temp_filename temp_outchan lexbuf =
   try
@@ -74,17 +74,19 @@ let verify tool_cmd temp_filename temp_outchan lexbuf =
       print_space ();
     end;
     close_box ();
-    print_flush ()
-  (* TODO(nekketsuuu): exit with correct code *)
+    print_flush ();
+    (* set exit code *)
+    if is_term then 0 else 1
   with
+  (* FAILED. exit code <> 0 *)
   | Parsing.Parse_error ->
-     print_error "Parse_error"
+     (print_error "Parse_error"; 1)
   | LexErr(str)
   | ParseErr(str)
   | EvalErr(str)
   | TypeErr(str)
   | ConvErr(str) ->
-     print_error str
+     (print_error str; 1)
   | Nontermination(str) ->
     set_formatter_out_channel stdout;
     open_vbox 0;
@@ -97,7 +99,8 @@ let verify tool_cmd temp_filename temp_outchan lexbuf =
       print_space ();
     end;
     close_box ();
-    print_flush ()
+    print_flush ();
+    1
 
 let rec interpret tool_cmd =
   print_string "> ";
@@ -107,7 +110,8 @@ let rec interpret tool_cmd =
   begin
     try
       Sys.catch_break true;
-      verify tool_cmd temp_filename temp_outchan lexbuf;
+      (* ignore the exit code *)
+      ignore @@ verify tool_cmd temp_filename temp_outchan lexbuf;
       close_out_noerr temp_outchan;
       Sys.remove temp_filename;
       Sys.catch_break false
@@ -121,7 +125,8 @@ let rec interpret tool_cmd =
 let file tool_cmd filename =
   (* TODO(nekketsuuu): モードを増やすとき、拡張子に気をつける *)
   if Filename.extension filename = ".c" then
-    print_error "The extension of input file must not be .c"
+    (print_error "The extension of input file must not be .c";
+     exit 1)
   else if Sys.file_exists filename then
     let inchan = open_in filename in
     let lexbuf = Lexing.from_channel inchan in
@@ -130,10 +135,12 @@ let file tool_cmd filename =
       | SeqSyntax.C -> (Filename.remove_extension filename) ^ ".c"
     in
     let temp_outchan = open_out temp_filename in
-    verify tool_cmd temp_filename temp_outchan lexbuf;
-    close_out_noerr temp_outchan
+    let exit_code = verify tool_cmd temp_filename temp_outchan lexbuf in
+    close_out_noerr temp_outchan;
+    exit exit_code
   else
-    print_error @@ "No such file " ^ filename
+    (print_error @@ "No such file " ^ filename;
+     exit 1)
 
 (*
  * Main function
