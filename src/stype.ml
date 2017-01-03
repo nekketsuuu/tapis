@@ -15,14 +15,14 @@ let sprint_expr_error el actual_ty expected_ty =
   (* TODO(nekketsuuu): print location *)
   Printf.sprintf
     "Type mismatch. An expression %s has type %s but an expression was expected of type %s"
-    (PiSyntax.show_expr el.loc_val)
-    (Type.show actual_ty)
-    (Type.show expected_ty)
+    (PiSyntax.show_el el)
+    (Type.show_t actual_ty)
+    (Type.show_t expected_ty)
 let sprint_expr_error_chan el actual_ty =
   Printf.sprintf
     "Type mismatch. An expression %s has type %s but an expression was expected of channel type"
-    (PiSyntax.show_expr el.loc_val)
-    (Type.show actual_ty)
+    (PiSyntax.show_el el)
+    (Type.show_t actual_ty)
 let rec sprint_error_chan_args x els actual_tys expected_tys =
   match actual_tys, expected_tys with
   | [], [] ->
@@ -39,9 +39,9 @@ let rec sprint_error_chan_args x els actual_tys expected_tys =
   | (aty :: atys), (ety :: etys) when aty <> ety ->
      Printf.sprintf
        "Channel arguments %s has type %s but an expression was expected of type %s"
-       (PiSyntax.show_expr (List.hd els).loc_val)
-       (Type.show aty)
-       (Type.show ety)
+       (PiSyntax.show_el @@ List.hd els)
+       (Type.show_t aty)
+       (Type.show_t ety)
   | (aty :: atys), (ety :: etys) ->
      sprint_error_chan_args x (List.tl els) atys etys
 

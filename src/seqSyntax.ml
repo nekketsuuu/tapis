@@ -6,7 +6,6 @@ open Type
  *)
 
 type var = string
-[@@deriving show]
 
 type program = def list * body
 and def = var * Type.t option * (var * Type.t) list * body
@@ -43,7 +42,6 @@ and expr =
   | EGt   of expr * expr
   | ELeq  of expr * expr
   | EGeq  of expr * expr
-[@@deriving show]
 
 (*
  * utility functions

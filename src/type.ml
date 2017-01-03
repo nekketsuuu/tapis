@@ -1,12 +1,10 @@
 type level =
   | LInt of int
   | LVar of string
-[@@deriving show]
 
 let min_level = 1
 
 type region = string
-[@@deriving show]
 
 type t =
   | TChan of level option * t list * region option
@@ -14,7 +12,6 @@ type t =
   | TBool
   | TInt
   | TVar  of string
-[@@deriving show]
 
 let _type_i = ref 0
 let gensym_type () =
@@ -79,6 +76,39 @@ let rec sbst sigma t =
 
 open Format
 
+(* show_t : t -> unit *)
+let rec show_t ty =
+  match ty with
+  | TChan(lo, tys, ro) ->
+     let level =
+       match lo with
+       | None -> ""
+       | Some(LInt(i)) -> "(" ^ string_of_int i ^ ")"
+       | Some(LVar(l)) -> "(" ^ l ^ ")"
+     in
+     let region =
+       match ro with
+       | None -> ""
+       | Some(r) -> "; " ^ r
+     in
+     let args =
+       match tys with
+       | [] -> ""
+       | ty :: tys ->
+	  (show_t ty) ^
+	    (List.fold_right
+	       (fun ty str -> ", " ^ (show_t ty) ^ str)
+	       tys
+	       "")
+     in
+     Printf.sprintf
+       "#%s[%s%s]" level args region
+  | TUnit -> "unit"
+  | TBool -> "bool" 
+  | TInt  -> "int"
+  | TVar(a) -> a
+
+(* print_level_option : level option -> unit *)
 let print_level_option lo =
   match lo with
   | Some(l) ->
@@ -86,11 +116,13 @@ let print_level_option lo =
       | LInt(i) -> print_string @@ "(" ^ string_of_int i ^ ")"
       | LVar(x) -> print_string @@ "(" ^ x ^ ")")
   | None    -> ()
+(* print_region_option : region option -> unit *)
 let print_region_option ro =
   match ro with
   | Some(r) -> print_string r
   | None    -> print_string "?"
 
+(* print_t : t -> unit *)
 let rec print_t ty =
   open_box 1;
   begin

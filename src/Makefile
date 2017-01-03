@@ -1,4 +1,3 @@
-PACKS = ppx_deriving.std
 #OCAMLYACC = menhir
 #YFLAGS = --fixed-exception
 SOURCES = \

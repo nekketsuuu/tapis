@@ -3,7 +3,6 @@ type 'a location = {
     loc_start: Lexing.position; [@opaque]
     loc_end:   Lexing.position; [@opaque]
   }
-[@@deriving show]
 
 let dummy_loc x = {
     loc_val   = x;

@@ -1,5 +1,3 @@
-#use "topfind"
-#require "ppx_deriving.std"
 #mod_use "error.ml";;
 #mod_use "type.ml";;
 #mod_use "sbst.ml";;

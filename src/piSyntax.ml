@@ -5,7 +5,6 @@ open Location
  *)
 
 type name = string
-[@@deriving show]
 
 (*
  * In order to make type annotations mutable,
@@ -58,7 +57,6 @@ and expr =
   | EGt   of el * el
   | ELeq  of el * el
   | EGeq  of el * el
-[@@deriving show]
 
 (*
  * utility functions
@@ -148,6 +146,30 @@ open Format
 
 let tab_width = 2
 
+(* show_el : el -> string *)
+let rec show_el el =
+  match el.loc_val with
+  | EVar(x)  -> x
+  | EUnit    -> "()"
+  | EBool(b) -> if b then "true" else "false"
+  | EInt(i)  -> string_of_int i
+  | ENot(el) -> "not(" ^ show_el el ^ ")"
+  | ENeg(el) -> "(-" ^ show_el el ^ ")"
+  | EAnd(el1, el2) -> show_binary_el "&&" el1 el2
+  | EOr(el1, el2)  -> show_binary_el "||" el1 el2
+  | EAdd(el1, el2) -> show_binary_el "+" el1 el2
+  | ESub(el1, el2) -> show_binary_el "-" el1 el2
+  | EMul(el1, el2) -> show_binary_el "*" el1 el2
+  | EDiv(el1, el2) -> show_binary_el "/" el1 el2
+  | EEq(el1, el2)  -> show_binary_el "=" el1 el2
+  | ELt(el1, el2)  -> show_binary_el "<" el1 el2
+  | EGt(el1, el2)  -> show_binary_el ">" el1 el2
+  | ELeq(el1, el2) -> show_binary_el "<=" el1 el2
+  | EGeq(el1, el2) -> show_binary_el ">=" el1 el2
+and show_binary_el op el1 el2 =
+  "(" ^ show_el el1 ^ " " ^ op ^ " " ^ show_el el2 ^ ")"
+
+(* print_pl : pl -> unit *)
 let rec print_pl pl =
   open_box tab_width;
   print_pl' pl;
