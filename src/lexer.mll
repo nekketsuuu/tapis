@@ -5,14 +5,14 @@
 }
 
 let digit = ['0'-'9']
-let space = ' ' | '\t' | '\r' | '\n'
+let space = ' ' | '\t' | '\r'
 let alpha = ['a'-'z' 'A'-'Z' '_' ]
 let ident = alpha (alpha | digit)*
 
 rule main = parse
-| space+       { main lexbuf }
 | '\n'         { Lexing.new_line lexbuf;
 		 main lexbuf }
+| space+       { main lexbuf }
 | "/*"         { comment lexbuf;
 		 main lexbuf }
 | "O"          { Parser.ZERO }
