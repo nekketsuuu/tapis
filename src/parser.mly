@@ -28,15 +28,17 @@
 %token ZERO QUESTION EXCLAMATION PERIOD PIPE NEW IN
 %token EOF
 
-%left NOT
+/* (* lower to higher *) */
 %left AND OR
 %left EQ LT GT LEQ GEQ
 %left PLUS MINUS
 %left DIV
-%nonassoc AST
-%right prec_unary_minus
-%left prec_expr
+%nonassoc prec_unary_minus
+%nonassoc prec_not
 %right PIPE
+%right prec_if
+%nonassoc prec_inout
+%nonassoc prec_new
 
 %start toplevel
 %type <PiSyntax.pl> toplevel
@@ -55,32 +57,20 @@ toplevel:
 ;
 
 process:
-    | res_process
-	{ $1 }
+    | atomic_process
+        { $1 }
     | process PIPE process
 	{ annot_loc @@ PPar({ pl1 = $1; pl2 = $3 }) }
-;
-
-res_process:
-    | if_process
-	{ $1 }
-    | NEW ID IN res_process
+    | NEW ID IN process
+      %prec prec_new
 	{ annot_loc @@ PRes({ x    = $2;
 	                      tyxo = None;
 	                      pl   = $4;   }) }
-;
-
-if_process:
-    | rin_process
-	{ $1 }
-    | IF expr THEN if_process ELSE if_process
+    | IF expr THEN process ELSE process
+      %prec prec_if
 	{ annot_loc @@ PIf({ el = $2; pl1 = $4; pl2 = $6 }) }
-;
-
-rin_process:
-    | inout_process
-	{ $1 }
-    | AST ID QUESTION chans PERIOD rin_process
+    | AST ID QUESTION chans PERIOD process
+      %prec prec_inout
 	{ annot_loc @@ PRIn({ x     = $2;
 	                      ys    = $4;
 	                      pl    = $6;            }) }
@@ -88,16 +78,13 @@ rin_process:
 	{ annot_loc @@ PRIn({ x     = $2;
 	                      ys    = $4;
 	                      pl    = dummy_proc;    }) }
-;
-
-inout_process:
-    | atomic_process
-	{ $1 }
-    | ID QUESTION chans PERIOD inout_process
+    | ID QUESTION chans PERIOD process
+      %prec prec_inout
 	{ annot_loc @@ PIn({ x     = $1;
 	                     ys    = $3;
 	                     pl    = $5;            }) }
-    | ID EXCLAMATION exprs PERIOD inout_process
+    | ID EXCLAMATION exprs PERIOD process
+      %prec prec_inout
 	{ annot_loc @@ POut({ x    = $1;
 	                      els  = $3;
 	                      pl   = $5;   }) }
@@ -161,7 +148,7 @@ non_mul_expr:
     | atomic_expr
 	{ $1 }
     | NOT non_mul_expr
-      %prec prec_expr
+      %prec prec_not
 	{ annot_loc @@ ENot($2) }
     | MINUS non_mul_expr
       %prec prec_unary_minus
