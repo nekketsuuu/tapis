@@ -35,10 +35,10 @@
 %left DIV
 %nonassoc prec_unary_minus
 %nonassoc prec_not
+%nonassoc prec_new
 %right PIPE
 %right prec_if
 %nonassoc prec_inout
-%nonassoc prec_new
 
 %start toplevel
 %type <PiSyntax.pl> toplevel
