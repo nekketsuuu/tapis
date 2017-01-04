@@ -208,7 +208,6 @@ and print_process p =
        close_box ()
     | PPar(body) ->
        let rec print_ppar pl1 pl2 =
-	 open_vbox 0;
 	 (match pl1.loc_val with
 	  | PPar(body) ->
 	     print_ppar body.pl1 body.pl2
@@ -221,11 +220,12 @@ and print_process p =
 	     print_ppar body.pl1 body.pl2
 	  | _ ->
 	     print_pl' pl2);
-	 close_box ();
        in
        open_box 1;
        print_string "(";
+       open_vbox 0;
        print_ppar body.pl1 body.pl2;
+       close_box ();
        print_string ")";
        close_box ();
     | PRes(body) ->
