@@ -126,13 +126,14 @@ exprs:
 	{ [$1] }
 ;
 
+/* (* Be careful about the atomic expr `LPAR expr RPAR' *) */
 exprs_list:
-    | expr CAMMA exprs_list_non_empty
+    | expr CAMMA exprs_list_length_gt_1
 	{ $1 :: $3 }
 ;
 
-exprs_list_non_empty:
-    | expr CAMMA exprs_list
+exprs_list_length_gt_1:
+    | expr CAMMA exprs_list_length_gt_1
 	{ $1 :: $3 }
     | expr
 	{ [$1] }
