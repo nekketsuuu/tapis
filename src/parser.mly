@@ -37,8 +37,6 @@
 %nonassoc prec_not
 %nonassoc prec_new
 %right PIPE
-%right prec_if
-%nonassoc prec_inout
 
 %start toplevel
 %type <PiSyntax.pl> toplevel
@@ -61,21 +59,19 @@ process:
         { $1 }
     | process PIPE process
 	{ annot_loc @@ PPar({ pl1 = $1; pl2 = $3 }) }
+    | NEW ID IN process
+      %prec prec_new
+	{ annot_loc @@ PRes({ x    = $2;
+	                      tyxo = None;
+	                      pl   = $4;   }) }
 ;
 
 non_pipe_process:
     | atomic_process
         { $1 }
-    | NEW ID IN non_pipe_process
-      %prec prec_new
-	{ annot_loc @@ PRes({ x    = $2;
-	                      tyxo = None;
-	                      pl   = $4;   }) }
     | IF expr THEN non_pipe_process ELSE non_pipe_process
-      %prec prec_if
 	{ annot_loc @@ PIf({ el = $2; pl1 = $4; pl2 = $6 }) }
     | AST ID QUESTION chans PERIOD non_pipe_process
-      %prec prec_inout
 	{ annot_loc @@ PRIn({ x     = $2;
 	                      ys    = $4;
 	                      pl    = $6;            }) }
@@ -84,12 +80,10 @@ non_pipe_process:
 	                      ys    = $4;
 	                      pl    = dummy_proc;    }) }
     | ID QUESTION chans PERIOD non_pipe_process
-      %prec prec_inout
 	{ annot_loc @@ PIn({ x     = $1;
 	                     ys    = $3;
 	                     pl    = $5;            }) }
     | ID EXCLAMATION exprs PERIOD non_pipe_process
-      %prec prec_inout
 	{ annot_loc @@ POut({ x    = $1;
 	                      els  = $3;
 	                      pl   = $5;   }) }
