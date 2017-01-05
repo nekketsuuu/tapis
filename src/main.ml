@@ -11,26 +11,13 @@ let print_error str =
 
 (* verify : string -> string -> out_channel -> Lexing.from_channel -> int *)
 (* temp_outchan is closed in this function *)
-let verify tool_cmd temp_filename temp_outchan lexbuf =
+let rec verify tool_cmd temp_filename temp_outchan lexbuf =
   try
     (* parse *)
     let process = Parser.toplevel Lexer.main lexbuf in
     (* type inference and program transformation *)
     let process = PiSyntax.closure process in
-    set_formatter_out_channel stdout;
-    open_vbox 0;
-    begin
-      open_vbox 4;
-      print_string "input:";
-      print_space ();
-      open_box 0;
-      PiSyntax.print_pl process;
-      close_box ();
-      close_box ();
-      print_space ();
-    end;
-    close_box ();
-    print_flush ();
+    print_input process;
     Stype.infer process;
     let whole_program = Ttype.infer process in
     (* termination analysis of a sequential program *)
@@ -44,37 +31,14 @@ let verify tool_cmd temp_filename temp_outchan lexbuf =
 		    (if Sys.unix || Sys.cygwin then " > /dev/null"
 		     else " > NUL")
     in
+    print_cmd seqterm;
     let seqterm_exit_code = Sys.command seqterm in
     (* success? *)
     let is_term =
       if seqterm_exit_code = 0 then true
       else false
     in
-    (* result *)
-    set_formatter_out_channel stdout;
-    open_vbox 0;
-    begin
-      open_vbox 4;
-      print_string "tool:";
-      print_space ();
-      print_string seqterm;
-      close_box ();
-      print_space ();
-    end;
-    (* TODO(nekketsuuu): color *)
-    begin
-      open_vbox 4;
-      print_string "RESULT:";
-      print_space ();
-      (if is_term then
-	 print_string "SUCCESS! It's terminating."
-       else
-	 print_string "FAILED. I don't know termination.");
-      close_box ();
-      print_space ();
-    end;
-    close_box ();
-    print_flush ();
+    print_result is_term;
     (* set exit code *)
     if is_term then 0 else 1
   with
@@ -101,6 +65,51 @@ let verify tool_cmd temp_filename temp_outchan lexbuf =
     close_box ();
     print_flush ();
     1
+and print_input process =
+  set_formatter_out_channel stdout;
+  open_vbox 0;
+  begin
+    open_vbox 4;
+    print_string "input:";
+    print_space ();
+    open_box 0;
+    PiSyntax.print_pl process;
+    close_box ();
+    close_box ();
+    print_space ();
+  end;
+  close_box ();
+  print_flush ()
+and print_cmd cmd =
+  set_formatter_out_channel stdout;
+  open_vbox 0;
+  begin
+    open_vbox 4;
+    print_string "tool:";
+    print_space ();
+    print_string cmd;
+    close_box ();
+    print_space ();
+  end;
+  close_box ();
+  print_flush ()
+and print_result is_term =
+  (* TODO(nekketsuuu): color *)
+  set_formatter_out_channel stdout;
+  open_vbox 0;
+  begin
+    open_vbox 4;
+    print_string "RESULT:";
+    print_space ();
+    (if is_term then
+       print_string "SUCCESS! It's terminating."
+     else
+       print_string "FAILED. I don't know termination.");
+    close_box ();
+    print_space ();
+  end;
+  close_box ();
+  print_flush ()
 
 let rec interpret tool_cmd =
   print_string "> ";
