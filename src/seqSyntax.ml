@@ -204,6 +204,8 @@ and printC_body' bounded_vars body =
      in
      if List.mem x bounded_vars then
        begin
+	 raise @@ ConvErr("printC_decl")
+	 (*
 	 open_vbox 0;
 	 open_vbox tab_width;
 	 print_string "{";
@@ -214,6 +216,7 @@ and printC_body' bounded_vars body =
 	 print_string "}";
 	 close_box ();
 	 bounded_vars
+	 *)
        end
      else
        begin

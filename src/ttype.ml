@@ -195,7 +195,7 @@ let rec transform env level pl =
 			 body.ys
 			 tys
 			 [],
-		       sbst_nondet env body.ys prog)
+		       prog)
 		      defs,
 	     SSkip)
 	 | _ ->
