@@ -107,7 +107,7 @@ and print_result is_term =
     (if is_term then
        print_string "SUCCESS! It's terminating."
      else
-       print_string "FAILED. I don't know termination.");
+       print_string "FAILED. I don't know its termination.");
     close_box ();
     print_space ();
   end;
