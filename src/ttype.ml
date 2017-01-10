@@ -481,6 +481,14 @@ let rec infer pl : SeqSyntax.program =
   let lsym = gensym_level () in
   let l = LVar(lsym) in
   let c = infer_proc Env.empty l pl in
+  (* Delete the top-level *)
+  (* TODO(nekketsuuu): この制約を消すことで連結成分分解が上手くいくはず。確認。 *)
+  let c = ConstraintsL.filter
+	    (fun (t1, t2) -> if t2 = l then false
+			     else if t1 = l then raise @@ ConvErr("Ttype.infer")
+			     else true)
+	    c
+  in
   let sbst = ConstraintsL.solve c in
   max_level := Type.min_level;
   let is_def = annotate_level sbst Env.empty pl in
