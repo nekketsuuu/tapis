@@ -17,9 +17,9 @@ let rec verify tool_cmd temp_filename temp_outchan lexbuf =
     let process = Parser.toplevel Lexer.main lexbuf in
     (* type inference and program transformation *)
     let process = PiSyntax.closure process in
-    print_input process;
     Stype.infer process;
     let whole_program = Ttype.infer process in
+    print_input true process;
     (* termination analysis of a sequential program *)
     set_formatter_out_channel temp_outchan;
     SeqSyntax.print_program whole_program;
@@ -58,19 +58,22 @@ let rec verify tool_cmd temp_filename temp_outchan lexbuf =
       open_vbox 4;
       print_string "RESULT:";
       print_space ();
-      print_string "FAILED. I don't know termination.";
+      print_string "FAILED. I don't know its termination.";
       close_box ();
       print_space ();
     end;
     close_box ();
     print_flush ();
     1
-and print_input process =
+and print_input is_typed process =
   set_formatter_out_channel stdout;
   open_vbox 0;
   begin
     open_vbox 4;
-    print_string "input:";
+    (if is_typed then
+       print_string "typed input:"
+    else
+      print_string "input:");
     print_space ();
     open_box 0;
     PiSyntax.print_pl process;
