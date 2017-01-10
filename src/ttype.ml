@@ -255,12 +255,6 @@ let rec transform is_def env level pl =
 	      if IsDef.mem ty is_def then
 		(defs, SSeq(SApp(f, es), prog))
 	      else
-		(* TODO(nekketsuuu): 効率化 *)
-		let rec generate_args n =
-		  if n <= 0 then []
-		  else
-		    ("y" ^ string_of_int n) :: (generate_args @@ n-1)
-		in
 		(defs, prog)
 	    else
 	      raise @@ Nontermination("The level of " ^ body.x ^
