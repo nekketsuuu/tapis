@@ -97,24 +97,57 @@ and set_level ty =
 
 let max_level = ref Type.min_level
 
-(* annotate_level : Type.t sbst -> PiSyntax.pl -> unit *)
-let rec annotate_level sbst pl =
+module IsDef =
+  Set.Make
+    (struct
+	type t = Type.t
+	let compare = compare
+      end)
+
+(* annotate_level : Type.t sbst -> Env.t -> PiSyntax.pl -> IsDef.t *)
+let rec annotate_level sbst env pl =
+  (* TODO(nekketsuuu): Error handling *)
+  (* TODO(nekketsuuu): Refactoring *)
   match pl.loc_val with
-  | PNil -> ()
-  | PIn(body)
+  | PNil -> IsDef.empty
+  | PIn(body) ->
+     let tyx = Env.find body.x env in
+     let tyys = get_arg_types tyx in
+     let env = List.fold_left2
+		 (fun env y ty -> Env.add y ty env)
+		 env body.ys tyys in
+     annotate_level sbst env body.pl
   | PRIn(body) ->
-     annotate_level sbst body.pl
+     let tyx = Env.find body.x env in
+     let tyys = get_arg_types tyx in
+     let env = List.fold_left2
+		 (fun env y ty -> Env.add y ty env)
+		 env body.ys tyys in
+     let is_def = annotate_level sbst env body.pl in
+     IsDef.add tyx is_def
   | POut(body) ->
-     annotate_level sbst body.pl
+     annotate_level sbst env body.pl
   | PPar(body) ->
-     annotate_level sbst body.pl1;
-     annotate_level sbst body.pl2
+     let is_def1 = annotate_level sbst env body.pl1 in
+     let is_def2 = annotate_level sbst env body.pl2 in
+     IsDef.union is_def1 is_def2
   | PRes(body) ->
      body.tyxo <- get_type sbst body.tyxo;
-     annotate_level sbst body.pl
+     begin
+       match body.tyxo with
+       | Some(ty) ->
+	  annotate_level sbst (Env.add body.x ty env) body.pl
+       | None ->
+	  raise @@ ConvErr("annotate_level")
+     end
   | PIf(body) ->
-     annotate_level sbst body.pl1;
-     annotate_level sbst body.pl2
+     let is_def1 = annotate_level sbst env body.pl1 in
+     let is_def2 = annotate_level sbst env body.pl2 in
+     IsDef.union is_def1 is_def2
+and get_arg_types ty =
+  match ty with
+  | TChan(_, tys, _) -> tys
+  | _ -> raise @@ ConvErr("get_arg_types")
 and get_type sbst tyo =
   match tyo with
   | Some(ty) -> Some(get_type' sbst ty)
@@ -158,9 +191,11 @@ let rec to_list defs =
  * program transformation
  *)
 
-(* transform : Env.t -> int -> PiSyntax.pl -> Defs.t * SeqSyntax.body *)
+(* TODO(nekketsuuu): Refactoring *)
+
+(* transform : IsDef.t -> Env.t -> int -> PiSyntax.pl -> Defs.t * SeqSyntax.body *)
 (* We assume that each type in pl is already annotated correctly *)
-let rec transform env level pl =
+let rec transform is_def env level pl =
   match pl.loc_val with
   | PNil ->
      (Defs.empty, SSkip)
@@ -171,7 +206,7 @@ let rec transform env level pl =
 	 match tyx with
 	 | TChan(_, tys, _) ->
 	    let env = Env.add_list body.ys tys env in
-	    let (defs, prog) = transform env level body.pl in
+	    let (defs, prog) = transform is_def env level body.pl in
 	    (defs, sbst_nondet env body.ys prog)
 	 | _ ->
 	    raise @@ ConvErr("transform: Non-channel name on input")
@@ -187,7 +222,7 @@ let rec transform env level pl =
 	 match ty with
 	 | TChan(Some(LInt(i)), tys, _) ->
 	    let env = Env.add_list body.ys tys env in
-	    let (defs, prog) = transform env i body.pl in
+	    let (defs, prog) = transform is_def env i body.pl in
 	    (Defs.add (ty,
 		       List.fold_right2
 			 (fun y ty ys -> if ty = TBool || ty = TInt then y :: ys
@@ -212,12 +247,12 @@ let rec transform env level pl =
 	 match ty with
 	 | TChan(Some(LInt(i)), _, _) ->
 	    if i < level then
-	      transform env level body.pl
+	      transform is_def env level body.pl
 	    else if i = level then
-	      let (defs, prog) = transform env level body.pl in
+	      let (defs, prog) = transform is_def env level body.pl in
 	      let f = SeqSyntax.make_funcsym ty in
 	      let es = transform_els env body.els in
-	      if Defs.exists (fun (ty', _, _) -> ty' = ty) defs then
+	      if IsDef.mem ty is_def then
 		(defs, SSeq(SApp(f, es), prog))
 	      else
 		(* TODO(nekketsuuu): 効率化 *)
@@ -226,8 +261,7 @@ let rec transform env level pl =
 		  else
 		    ("y" ^ string_of_int n) :: (generate_args @@ n-1)
 		in
-		(Defs.add (ty, generate_args @@ List.length es, SSkip) defs,
-		 SSeq(SApp(f, es), prog))
+		(defs, prog)
 	    else
 	      raise @@ Nontermination("The level of " ^ body.x ^
 					" is " ^ string_of_int i ^
@@ -240,23 +274,23 @@ let rec transform env level pl =
 			     " is not found in environment")
      end
   | PPar(body) ->
-     let (defs1, prog1) = transform env level body.pl1 in
-     let (defs2, prog2) = transform env level body.pl2 in
+     let (defs1, prog1) = transform is_def env level body.pl1 in
+     let (defs2, prog2) = transform is_def env level body.pl2 in
      (Defs.union defs1 defs2, SNDet(prog1, prog2))
   | PRes(body) ->
      begin
        match body.tyxo with
        | Some(tyx) ->
 	  let env = Env.add body.x tyx env in
-	  let (defs, prog) = transform env level body.pl in
+	  let (defs, prog) = transform is_def env level body.pl in
 	  (defs, sbst_nondet env [body.x] prog)
        | _ ->
 	  raise @@ ConvErr("transform: No type information")
      end
   | PIf(body) ->
      let e = transform_el env body.el in
-     let (defs1, prog1) = transform env level body.pl1 in
-     let (defs2, prog2) = transform env level body.pl2 in
+     let (defs1, prog1) = transform is_def env level body.pl1 in
+     let (defs2, prog2) = transform is_def env level body.pl2 in
      (Defs.union defs1 defs2, SIf(e, prog1, prog2))
 (* TODO(nekketsuuu): 関数引数のsbstについてちゃんと考える *)
 (* sbst_nondet : Env.t -> name list -> SeqSyntax.body -> SeqSyntax.body *)
@@ -449,6 +483,6 @@ let rec infer pl : SeqSyntax.program =
   let c = infer_proc Env.empty l pl in
   let sbst = ConstraintsL.solve c in
   max_level := Type.min_level;
-  annotate_level sbst pl;
-  let (defs, prog) = transform Env.empty !max_level pl in
+  let is_def = annotate_level sbst Env.empty pl in
+  let (defs, prog) = transform is_def Env.empty !max_level pl in
   make_whole_program defs prog
