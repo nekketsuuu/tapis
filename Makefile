@@ -1,12 +1,14 @@
-.PHONY: all src clean
+.PHONY: all src clean clean-example
 
 all: src
 
 src:
-	$(MAKE) -C src
+	@$(MAKE) -C src
 
 clean:
-	$(MAKE) -C src clean
+	@$(MAKE) -C src clean
 
-clean-all: clean
-	rm -f test/*.c test/*.bc test/*.kittel test/*.kittel.proof test/*.t2 test/*.ll
+clean-example:
+	@$(MAKE) -C example clean
+
+clean-all: clean clean-example
