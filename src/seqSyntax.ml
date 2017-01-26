@@ -86,7 +86,7 @@ let tab_width = 4
 
 let rec printC_program (defs, body) =
   open_vbox 0;
-  print_string "int nondet();";
+  print_string "extern int nondet();";
   print_cut ();
   print_cut ();
   print_string "typedef int bool;";
@@ -97,7 +97,7 @@ let rec printC_program (defs, body) =
   print_cut ();
   print_string "int nondet_int() { return nondet(); }";
   print_cut ();
-  print_string "bool nondet_bool() { return nondet() % 2; }";
+  print_string "bool nondet_bool() { return (bool)(nondet() % 2); }";
   print_cut ();
   print_cut ();
   close_box ();

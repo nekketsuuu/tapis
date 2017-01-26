@@ -169,6 +169,7 @@ let _ =
   in
   let arg_tool = Arg.Set_string(tool_cmd) in
   let arg_interpret = Arg.Set(is_interpret_mode) in
+  (* TODO(nekketsuuu): --printall option *)
   let speclist =
     [("-mode", arg_mode,
       "Choose a program transformation mode. Only C mode is supported currently. C is the default value");
