@@ -1,0 +1,4 @@
+*loop?n.
+  if n <= 0 then O
+  else loop!(n-1)
+| loop!n

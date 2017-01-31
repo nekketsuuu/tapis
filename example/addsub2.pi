@@ -1,0 +1,8 @@
+new global in
+  *global?u.
+    (*add?n.
+       if n >= 10 then O else add!(n+1)
+     | *sub?n.
+         if n <= 0 then O else sub!(n-1)
+     | new n in (add!n | sub!n))
+  | global!()

@@ -1,0 +1,8 @@
+*fib?(n, r).
+   if n <= 0 then r!1
+   else
+     (new r1 in new r2 in
+        fib!(n-1, r1)
+        | fib!(n-2, r2)
+        | r1?n1.r2?n2.r!(n1+n2))
+| new r in fib!(n, r)

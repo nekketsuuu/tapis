@@ -1,0 +1,7 @@
+*loop1?n.
+  if n <= 0 then O
+  else loop2!(n-1)
+| *loop2?n.
+    if n <= 0 then O
+    else loop1!(n-1)
+| loop1!n

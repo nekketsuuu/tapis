@@ -1,0 +1,8 @@
+/* これは検査できないはず */
+*pred?(n, r).r!(n-1)
+| *fact?(n, r).
+    if n <= 0 then r!1
+    else
+      (new rr in new rn in
+       (pred!(n, rn) | rn?nn.fact!(nn, rr) | rr?m.r!(n*m)))
+| new r in fact!(n, r)

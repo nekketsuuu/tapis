@@ -1,0 +1,5 @@
+/* TODO(nekketsuuu) */
+*f?x.
+  (*g?(y1, y2).x!y1.f!y2
+   | new r1 in new r2 in g!(r1, r2))
+| new r in (f!r | r?d)

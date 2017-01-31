@@ -1,0 +1,5 @@
+*fact?(n, r).
+  if n <= 0 then r!1
+  else
+    (new rr in (fact!(n-1, rr) | rr?m.r!(n*m)))
+| new r in fact!(n, r)

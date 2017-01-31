@@ -9,6 +9,13 @@
 *.cmx
 ._bcdi
 ._d
+/example/**/*.c
+/example/**/*.bc
+/example/**/*.kittel
+/example/**/*.kittel.proof
+/example/**/*.t2
+/example/**/*.ll
+/testlog
 
 # binary
 piterm
