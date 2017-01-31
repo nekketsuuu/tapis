@@ -1,0 +1,22 @@
+/*** lockfree, five dining philosophers ***/
+/*** philos1,...,philos4 are left-handed, who pick the left fork first ***/
+/*** philos5 is a right-handed philosopher, who picks the right fork first ***/
+
+new philos1 in new philos2 in new philos3 in new philos4 in new philos5 in
+new fork1 in new fork2 in new fork3 in new fork4 in new fork5 in
+  *philos1?(left,right).
+        left?w.right?w.(left!() | right!() | eating1!() | philos1!(left,right)) |
+  philos1!(fork1,fork2) |
+  *philos2?(left,right).
+        left?w.right?w.(left!() | right!() | eating2!() | philos2!(left,right)) |
+  philos2!(fork2,fork3) | 
+  *philos3?(left,right).
+        left?w.right?w.(left!() | right!() | eating3!() | philos3!(left,right)) |
+  philos3!(fork3,fork4) | 
+  *philos4?(left,right).
+        left?w.right?w.(left!() | right!() | eating4!() | philos4!(left,right)) |
+  philos4!(fork4,fork5) | 
+  *philos5?(left,right).
+        right?w.left?w.(left!() | right!() | eating5!() | philos5!(left,right)) |
+  philos5!(fork5,fork1) | 
+  fork1!() | fork2!() | fork3!() | fork4!() | fork5!() 

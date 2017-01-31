@@ -1,0 +1,7 @@
+  x?z.     /*** wait to read z from x ***/
+  y!z      /*** then send z on y ***/
+| 
+  y?z.     /*** wait to read from y ***/
+  x!z      /*** then send z on x ***/
+
+

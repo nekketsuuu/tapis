@@ -1,0 +1,10 @@
+/*** A test input for deadlock analyzer ***/
+/*** A non-tail recursive function for computing the factorial.
+ ***/
+
+(*factorial?(n, r).
+     if n=0 then r!1
+     else (new r1 in (factorial!(n-1, r1) | r1?m.r!(m * n))))
+| 
+new r in
+  (factorial!(n, r) | r?result.print!result)

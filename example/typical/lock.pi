@@ -1,0 +1,7 @@
+new secret in new lock_x in
+  (new cont in
+    secret?b.(secret!b | if b then lock_x?z.(lock_x!() | cont!()) else O) | 
+    cont?z.public!true) |
+  lock_x?z.lock_y?z.(lock_x!() | lock_y!()) |
+  lock_x!() |
+  secret!true

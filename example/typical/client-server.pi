@@ -1,0 +1,12 @@
+/*** Simple server/client processes ***/
+/*** The lock-freedom analyzer can determine that the client processes
+ *** can always receive a reply.
+ ***/
+new server in 
+  *server?r.r!1 
+  /*** a server, which always sends back 1 to the client ***/
+| new r in server!r.r?z.print!z
+  /*** a client process, which sends a request and waits for a reply ***/
+| new r in server!r.r?z.print!z
+  /*** a client process, which sends a request and waits for a reply ***/
+

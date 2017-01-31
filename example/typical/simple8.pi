@@ -1,0 +1,10 @@
+/*** A test input for the lock-freedom analyzer.
+ *** y! is judged to be lock-free: 
+ *** Since it never becomes ready (it does not appear at the top-level), 
+ *** the condition on lock-freedom (a communicaton is lock-free if,
+ *** _whenever it becomes ready_, it will eventually succeed) is vacuously true.
+ ***/
+x?y.y!1.O
+
+
+

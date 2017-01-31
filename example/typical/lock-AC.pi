@@ -1,0 +1,10 @@
+/*** A test input for information flow analyzer ***/
+/*** See "lock-AB.pi" for an explanation ***/
+
+new secret in new lock_x in
+  (new cont in
+    secret?b.(secret!b | if b then lock_x?z.(lock_x!() | cont!()) else cont!()) | 
+    cont?z.public!true) |
+  lock_y?z.lock_x?z.(lock_x!() | lock_y!()) |
+  lock_x!() |
+  secret!true

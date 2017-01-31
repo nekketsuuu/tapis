@@ -1,0 +1,27 @@
+/**** The symbol table example taken from 
+ ****    Deng and Sangiorgi, "Ensuring Termination by Typability," Information and Computation
+ **** The changes from the original example are:
+ ****    (1) Synchronous outputs have been replaced with asynchronous ones.
+ ****    (2) nil has been replaced by a dummy channel, and an extra parameter has been added to p,
+ ****        which expresses whether b is nil.
+ ****/
+(new p in
+(*p?(a, b, n, s, empty).
+  a?(t, r).
+    if t=s then (r!n | p!(a,b,n,s,empty))
+      else if  empty then 
+         (r!(n+1) | 
+          (new c in new dummy in 
+             (p!(c,dummy,n+1,t,true) | p!(a,c,n,s,false) |
+              *dummy?(_, r).r!0)))/*** A dummy process to respond to any request immediately.
+                                      Actually, it is never called.***/
+      else (b!(t,r) | p!(a,b,n,s,false)))
+| (new dummy in (p!(a,dummy,1,s0,true) | *dummy?(_, r).r!0))
+)
+| a!(1,r1) 
+| a!(2,r2)
+| a!(3,r3)
+| a!(4,r3)
+| r1?x.O
+| r2?x.O
+

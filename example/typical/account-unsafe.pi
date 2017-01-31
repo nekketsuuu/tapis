@@ -1,0 +1,15 @@
+/*** An unsafe version of the account object (see "account.pi")
+ *** The transfer service wrongly returns the updated balance,
+ *** so that the information about balance is revealed to the environment 
+ ***/
+new balance in new withdraw in new deposit in
+  balance!100 |
+  *withdraw?z.(let amount=fst(z) in let r = snd(z) in
+      balance?x.if x>=amount then (r!true | balance!(x-amount)) else (r!false | balance!x)) |
+  *deposit?z.(let amount=fst(z) in let r = snd(z) in
+      balance?x.(r!(x+amount) | balance!(x+amount))) |
+  *transfer?z.(let amount=fst(z) in let r = snd(z) in
+      if amount>=0 then balance?x.(r!(x+amount) | balance!(x+amount))
+      else r!0) |
+  (new c in (*c?_.((if true then (new r in deposit!(1,r)) else O) | c!()) | c!())) |
+  (new c in (*c?_.((if true then (new r in withdraw!(1,r)) else O) | c!()) | c!()))

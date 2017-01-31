@@ -1,0 +1,4 @@
+/*** deadlocked process ***/
+new x in new y in 
+  x?z.y!z | y?z.x!z
+

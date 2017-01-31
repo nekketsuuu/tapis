@@ -1,0 +1,31 @@
+/*** A sample program for termination analysis
+ *** The program was taken from Deng and Sangiorgi, "Ensuring Termination by Typability," Section 5.2 
+ *** It is an encoding of choice:  x1!1+x2!2 | x1?y.O + x2?y.O 
+ ***/
+
+new s in 
+(s!true 
+  | (new a1 in x1!(1, s, a1).a1?x.if x then O else O)
+  | (new a2 in x2!(2, s, a2).a2?x.if x then O else O)
+ )
+|
+new r in
+(r!true 
+   | (new g1 in 
+      (*g1?u.x1?(z, s, a).
+            r?x.
+             if x then
+                (s?y.if y then
+                       (r!false | s!false | a!true | O)
+                    else
+                       (r!true | s!false | a!false | g1!()))
+             else (r!false | y!(z, s, a))))
+  | (new g2 in 
+      (*g2?u.x2?(z, s, a).
+            r?x.
+             if x then
+               (s?y.if y then
+                       (r!false | s!false | a!true | O)
+                    else
+                       (r!true | s!false | a!false | g2!()))
+             else (r!false | y!(z, s, a)))))

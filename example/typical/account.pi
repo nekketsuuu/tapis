@@ -1,0 +1,20 @@
+/*** A test input for the information flow analyzer. ***/
+/*** A bank account object, which keeps the current balance in the channel 'balance'
+ *** and provides three services withdraw, deposit, transfer.
+ *** The environment is assumed not to be an owner of the account, so that
+ *** it can utilize only the transfer service.
+ *** The analyzer can conclude that the current balance is kept secret.
+ ***/
+/*** Modified by Takuma Ishikawa: replace *(if ...) by new c in (*c?_.(if ... | c!()) | c!()) ***/
+
+new balance in new withdraw in new deposit in
+  balance!100 |
+  *withdraw?z.(let amount=fst(z) in let r = snd(z) in
+      balance?x.if x>=amount then (r!true | balance!(x-amount)) else (r!false | balance!x)) |
+  *deposit?z.(let amount=fst(z) in let r = snd(z) in
+      balance?x.(r!(x+amount) | balance!(x+amount))) |
+  *transfer?z.(let amount=fst(z) in let r = snd(z) in
+      if amount>=0 then balance?x.(r!true | balance!(x+amount))
+      else r!false) |
+  (new c in (*c?_.((if true then (new r in deposit!(1,r)) else O) | c!()) | c!())) |
+  (new c in (*c?_.((if true then (new r in withdraw!(1,r)) else O) | c!()) | c!()))

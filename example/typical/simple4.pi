@@ -1,0 +1,11 @@
+/*** Not deadlocked ***/
+/*** If useless code elimination is performed on this process,
+ *** no process can be eliminated. Although the communication on
+ *** x always succeed, the value 1 sent on x will be output to the environment
+ *** through y.
+ *** If the values communicated through x and y are unrelated,
+ *** then the communication on x is eliminated: see "simple5.pi"
+ ***/
+new x in 
+   x?z.y!z | x!1.y?z
+

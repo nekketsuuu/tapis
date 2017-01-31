@@ -1,0 +1,9 @@
+/*** Not deadlocked ***/
+/*** The same as simple4.pi, except that 
+ *** the values communicated through x and y are unrelated,
+ *** UCE (useless code elimination) eliminates the communication 
+ *** on x.
+ ***/
+new x in 
+   x?z.y!2 | x!1.y?z
+

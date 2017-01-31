@@ -1,0 +1,13 @@
+/*** Client/server processes ***/
+/*** There are two servers, which delegates the obligation to send a reply to each other
+ *** infinitely.
+ *** The lock-freedom analyzer reports that the client may not be able to receive a reply.
+ ***/
+new server1 in new server2 in
+  *server1?r.server2!r   /*** A server, who delegates a request to server2 ***/
+| *server2?r.server1!r   /*** A server, who delegates a request to server1 ***/
+|  new r in server1!r.r?z.print!z
+  /*** a client process, which sends a request and waits for a reply ***/
+| new r in server2!r.r?z.print!z
+  /*** a client process, which sends a request and waits for a reply ***/
+

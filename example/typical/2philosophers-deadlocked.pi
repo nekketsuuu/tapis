@@ -1,0 +1,13 @@
+/*** deadlocked, two dining philosophers ***/
+new philos1 in new philos2 in 
+new fork1 in new fork2 in
+  /*** a left-handed philosopher, who picks the left fork first ***/
+  *philos1?(left,right).
+      left?w.right?w.(left!() | right!() | eating1!() | philos1!(left,right)) |
+  philos1!(fork1,fork2) |
+  /*** a right-handed philosopher, who picks the left fork first ***/
+  *philos2?(left,right).
+      left?w.right?w.(left!() | right!() | eating2!() | philos2!(left,right)) |
+  philos2!(fork2,fork1) | 
+  /*** forks ***/
+  fork1!() | fork2!() 

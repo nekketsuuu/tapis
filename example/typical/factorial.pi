@@ -1,0 +1,16 @@
+/*** A test input for deadlock analyzer ***/
+/*** The deadlock-freedom analyzer can conclude that r?result on the last line 
+ *** is deadlock-free (in the sense that the process can never enter a state
+ *** where r?result is ready but the whole process can no longer be reduced.
+ *** Note that the present lock-freedom analyzer cannot conclude that
+ *** r?result will eventually succeed; to conclude that, the analyzer would have to
+ *** infer that the first argument of factorial_aux decreases monotonically.
+ ***/
+
+*factorial_aux?(n, acc, reply).
+     if n=0 then reply!acc
+     else factorial_aux!(n - 1,acc * n,reply) |
+*factorial?(n, reply).
+     factorial_aux!(n, 1, reply) |
+new r in
+  factorial!(n, r) | r?result.print!result

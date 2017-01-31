@@ -1,0 +1,6 @@
+new t in new f in new por in
+  *t?r.r!true
+| *f?r.r!false
+| *por?(f1,f2,r).
+        (new x in (f1!x | f2!x | x?b.if b then r!true else x?b.r!b))
+| new y in (por!(t,f,y) | y?b.succ!())

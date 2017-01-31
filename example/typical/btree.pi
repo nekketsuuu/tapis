@@ -1,0 +1,28 @@
+/*** TODO? ***/
+(*newtree?(i, s).
+  (new state in
+   new dummyi in
+   new dummys in
+   ((*dummyi?(_, r).r!())
+    | (*dummys?(_, r).r!true)
+    | state!(0, true, dummyi, dummys, dummyi, dummys)
+    | (*i?(n, r).
+        state?(n1, leafp, ri, li).
+          if leafp then /*** if t is a leaf ***/
+           (new left_i in new left_s in new right_i in new right_s in
+            (newtree!(left_i, left_s) | newtree!(right_i, right_s)
+             | state!(n, false, left_i, left_s, right_i, right_s)
+             | r!()))
+          else /*** if t is a node ***/
+          (state!(n1, leafp, ri, li) | if n<n1 then li!(n, r) else ri!(n, r)))
+    | (*s?(n, r).
+        state?(n1, leafp, ls, rs).
+          (state!(n1, leafp, ls, rs)
+           | if leafp then r!false
+             else if n=n1 then r!true
+             else if n<n1 then ls!(n, r) else rs!(n, r))))))
+|
+new i in new s in 
+ newtree!(i, s) 
+ | new r in (i!(1, r) | r?x.O) 
+ | new r2 in (s!(1, r2) | r2?x.O)

@@ -1,0 +1,16 @@
+/*** An unsafe version of the account object (see "account.pi")
+ *** The transfer service wrongly returns the updated balance,
+ *** so that the information about balance is revealed to the environment 
+ ***/
+/*** Modified by Takuma Ishikawa: Replace *(if ... ) by (new c in (*c?_.((if ... ) | c!()))) **/
+new balance in new withdraw in new deposit in
+  balance!100 |
+  *withdraw?(amount,r).
+      balance?x.if x>=amount then (r!true | balance!(x-amount)) else (r!false | balance!x) |
+  *deposit?(amount,r).
+      balance?x.(r!(x+amount) | balance!(x+amount)) |
+  *transfer?(amount,r).
+      (if amount>=0 then balance?x.(r!(x+amount) | balance!(x+amount))
+       else r!0) |
+  (new c in (*c?_.((if true then (new r in deposit!(1,r)) else O) | c!()) | c!())) |
+  (new c in (*c?_.((if true then (new r in withdraw!(1,r)) else O) | c!()) | c!()))

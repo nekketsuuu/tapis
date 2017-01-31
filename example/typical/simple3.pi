@@ -1,0 +1,4 @@
+/*** Not deadlocked --- there is an ouput x! to break the deadlock ***/
+new x in new y in 
+  x?z.y!z | y?z.x!z | x!1
+

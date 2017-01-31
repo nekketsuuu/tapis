@@ -1,0 +1,18 @@
+/*** lock-free 2n dining philosphers, taken from Kobayashi's paper "A type system
+ *** for lock-free processes." ***/
+/*** Left-handed philosophers, who pick the left fork first, and
+ *** right-handed philosophers, who pick the right fork first, sit in a circle alternately.
+ ***/
+new philos in new config in new fork1 in new fork2 in
+  *philos?(id, left, right).
+    left?w.right?w.(left!() | right!() | eating!id | philos!(id, left, right))
+  | *config?(n, left, right).
+    if n<=0 then philos!(1, left, right)
+    else
+      (new fork1 in new fork2 in
+         philos!(2*n, left, fork1) | philos!(2*n+1, fork2, fork1)
+         | fork1!() | fork2!() | config!(n-1, fork2, right))
+  | config!(n-1, fork1, fork2)
+  | philos!(0, fork1, fork2)
+  | fork1!()
+  | fork2!()

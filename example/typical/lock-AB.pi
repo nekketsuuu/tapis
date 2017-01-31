@@ -1,0 +1,30 @@
+/*** A test input for information flow analyzer, which has been taken by Kobayashi's paper
+ *** about information flow analysis ***/
+/*** This example demonstrates that the order of lock acquisitions matter
+ *** the flow of information.
+ *** Consider the following four processes.
+ ***
+ ***  A:                     B:              C:               D:
+ ***   if(!secret)             lock(X);        lock(Y);       lock(X);
+ ***   {lock(X);               lock(Y);        lock(X);       unlock(X);
+ ***    unlock(X)};            unlock(Y);      unlock(X);     public := false
+ ***   public := true          unlock(X);      unlock(Y)
+ ***
+ *** The question is:
+ ***  "Which of the parallel compositions A|B, A|C, and A|D are safe?"
+ *** The process below encodes A|B. 
+ *** Run the information flow analyzer to see whether your conjecture is correct.
+ *** Test also "lock-AC.pi" and "lock-AD.pi," which implement A|C and A|D respectively.
+ ***/
+
+new secret in new lock_x in
+  (new cont in
+    secret?b.(secret!b | if b then lock_x?z.(lock_x!() | cont!()) else cont!()) | 
+    cont?z.public!true) |
+   /*** (if !secret then {lock(X); unlock(X)}); public := true ***/
+  lock_x?z.lock_y?z.(lock_x!() | lock_y!()) |
+   /*** lock(X); lock(Y); unlock(Y); unlock(X) ***/
+  lock_x!() |
+  secret!true
+   /*** inialization of lock X and shared variabe secret ***/
+   /*** The value 'true' stored in 'secret' should be kept secret ***/

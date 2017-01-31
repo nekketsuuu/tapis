@@ -1,0 +1,7 @@
+/*** A test input for deadlock analyzer ***/
+/*** The program models a typical pattern for calling a recursive function ***/
+/*** TyPiCal correctly infers that r? is deadlock-free. 
+ *** Note that in Version 1.0.x, TyPiCal's deadlock analysis could not infer so ***/
+
+(*f?r.if b then r!() else new r1 in (f!r1 | r1?x.r!x))
+| f!r.r?y.O

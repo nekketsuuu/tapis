@@ -1,0 +1,15 @@
+/***
+  An example taken from Kobayashi's paper about information flow analysis.
+  The process below implements:
+    cobegin
+        (secret1:=true; send(c, nil))
+       | let _ = receive(c) in secret2:=!secret1
+    coend;
+    public := false
+ ***/
+new secret1 in new secret2 in new c in new cont1 in new cont2 in
+  secret1!false |
+  secret2!false |
+  secret1?b.(secret1!true | c!().cont1!()) |
+  c?z.secret1?b.(secret1!b | secret2?z.(secret2!b | cont2!())) |
+  cont1?z.cont2?z.public?b.public!false

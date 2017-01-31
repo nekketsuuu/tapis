@@ -1,0 +1,4 @@
+/*** replication ***/
+/*** The lock-freedom analyzer can determine that all the ouputs will succeed ***/
+*x?y | x!1 | x!2 | x!3 | x!4
+

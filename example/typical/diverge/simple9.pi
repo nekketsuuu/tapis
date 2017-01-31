@@ -1,0 +1,5 @@
+/**** A process that is deadlock-free but is in livelock ****/
+/*** The process "*loop?x..." delegates the obligation to send a reply forever 
+ *** to itself.
+ ***/
+(*loop?(r,n).loop!(r,n+1).O) | loop!(reply,1).O | reply?z.O

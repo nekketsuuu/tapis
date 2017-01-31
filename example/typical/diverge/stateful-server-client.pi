@@ -1,0 +1,25 @@
+/*** A stateful server and clients ***/
+/*** The lock-freedom analyzer can determine that the client processes
+ *** can always receive a reply.
+ ***/
+new server in 
+  *repeat?(n, port).
+     /*** n: the number of requested handled so far ***/
+     /*** port: the channel for receiving requests ***/
+       port?r.(r!n | repeat!(n+1, port))
+| repeat!(0,server)
+  /*** a server, which counts the number of requests handled so far ***/
+| new r in server!r.r?z.print!z
+  /*** a client process, which sends a request and waits for a reply ***/
+| new r in server!r.r?z.print!z
+  /*** a client process, which sends a request and waits for a reply ***/
+
+/*** NOTE:  
+ *** Whether the analysis works well depends on the programming style.
+ *** If the server were written 
+ ***   *repeat?n.
+ ***      server?r.(r!n | repeat!n+1) |
+ ***   repeat!0
+ *** the analyzer cannot infer that the server listens to the channel 'server'
+ ***  infinitely often.
+ ***/

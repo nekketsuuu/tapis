@@ -1,0 +1,7 @@
+/*** A test input for the lock-freedom analyer ***/
+/*** The lock-freedom analyzer can infer that the output always succeed 
+ *** (if it is executed) while the input may not succeed.
+ ***/
+ x?y | if b then x!1 else O
+
+
