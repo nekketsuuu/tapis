@@ -269,6 +269,12 @@ let rec infer_proc env pl =
 	  let (ct2, cr2) = infer_proc env body.pl2 in
 	  (ConstraintsT.union ct0 (ConstraintsT.union ct1 ct2),
 	   ConstraintsR.union cr0 (ConstraintsR.union cr1 cr2))
+       | TVar(_) ->
+	  let (ct1, cr1) = infer_proc env body.pl1 in
+	  let (ct2, cr2) = infer_proc env body.pl2 in
+	  (ConstraintsT.add (tye, TBool)
+			    (ConstraintsT.union ct0 (ConstraintsT.union ct1 ct2)),
+	   ConstraintsR.union cr0 (ConstraintsR.union cr1 cr2))
        | _ ->
 	  raise @@ TypeErr(sprint_expr_error body.el tye TBool)
      end
