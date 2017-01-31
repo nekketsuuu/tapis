@@ -1,7 +1,7 @@
 *factz?(n, r).
-  if n >= 0 then
+  if n > 0 then
     (new rr in (factz!(n-1, rr) | rr?m.r!(n*m)))
-  else if n <= 0 then
+  else if n < 0 then
     (new rr in (factz!(n+1, rr) | rr?m.r!(n*m)))
   else
     r!1

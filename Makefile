@@ -6,8 +6,8 @@ bin:
 	@"$(MAKE)" -C src
 
 ## Examples & benchmark
-TESTS = test01 test02 test03 test04 test05 test06 test07 \
-ack addsub addsub2 fact fact2 fib \
+TESTS = test01 test02 test03 test04 test05 test06 \
+ack addsub addsub2 fact factz fact2 fib \
 typical/simple1 typical/simple2 typical/simple3 typical/simple4 \
 typical/simple5 typical/simple6 typical/simple7 typical/simple8 \
 typical/client-server typical/client-server-wrong typical/cobegin \
