@@ -14,7 +14,7 @@ typical/client-server typical/client-server-wrong typical/cobegin \
 typical/demo2 typical/ds-ex5-1 typical/ds-ex5-2 \
 typical/factorial typical/factorial-rec typical/factorial-rec2 \
 typical/lock typical/lock-AB typical/lock-AC typical/lock-AD \
-typical/parallel-or typical/stable
+typical/stable
 
 TOOL = ./UltimateAutomizer.sh # Change as you like
 
@@ -29,7 +29,7 @@ test-rest: bin $(TESTS:%=example/%.c)
 example/%.c: example/%.pi
 	@echo -n $<
 	@echo $< >> testlog
-	@(time ./piterm -tool="${TOOL}" $<) &>>testlog
+	@(time ./piterm -tool="${TOOL}" $<) &>>testlog || :
 	@tail -n5 testlog | head -n1
 	@echo "" >> testlog
 
