@@ -1,5 +1,6 @@
 #OCAMLYACC = menhir
 #YFLAGS = --fixed-exception
+LIBS = unix
 SOURCES = \
   error.ml type.ml sbst.ml location.ml \
   piSyntax.ml parser.mly lexer.mll \

@@ -134,31 +134,45 @@ let rec interpret tool_cmd =
   end;
   interpret tool_cmd
 
+let start_unix_time = ref 0.0
+let start_sys_time = ref 0.0
+
 let file tool_cmd filename =
   (* TODO(nekketsuuu): モードを増やすとき、拡張子に気をつける *)
-  if Filename.extension filename = ".c" then
-    (print_error "The extension of input file must not be .c";
-     exit 1)
-  else if Sys.file_exists filename then
-    let inchan = open_in filename in
-    let lexbuf = Lexing.from_channel inchan in
-    let temp_filename =
-      match !SeqSyntax.mode with
-      | SeqSyntax.C -> (Filename.remove_extension filename) ^ ".c"
-    in
-    let temp_outchan = open_out temp_filename in
-    let exit_code = verify tool_cmd temp_filename temp_outchan lexbuf in
-    close_out_noerr temp_outchan;
-    exit exit_code
-  else
-    (print_error @@ "No such file " ^ filename;
-     exit 1)
+  let exit_code = ref 0 in
+  begin
+    if Filename.extension filename = ".c" then
+      (print_error "The extension of input file must not be .c";
+       exit_code := 1)
+    else if Sys.file_exists filename then
+      let inchan = open_in filename in
+      let lexbuf = Lexing.from_channel inchan in
+      let temp_filename =
+	match !SeqSyntax.mode with
+	| SeqSyntax.C -> (Filename.remove_extension filename) ^ ".c"
+      in
+      let temp_outchan = open_out temp_filename in
+      exit_code := verify tool_cmd temp_filename temp_outchan lexbuf;
+      close_out_noerr temp_outchan
+    else
+      (print_error @@ "No such file " ^ filename;
+       exit_code := 1)
+  end;
+  let end_sys_time = Sys.time () in
+  let end_unix_time = Unix.gettimeofday () in
+  print_endline @@ "Elapsed time: " ^
+		     (string_of_float @@ end_unix_time -. !start_unix_time) ^ " sec";
+  print_endline @@ "Elapsed time only by " ^ app_name ^ ": " ^
+		     (string_of_float @@ end_sys_time -. !start_sys_time) ^ " sec"
+
 
 (*
  * Main function
  *)
 
 let _ =
+  start_unix_time := Unix.gettimeofday ();
+  start_sys_time := Sys.time ();
   let filename = ref "" in
   let tool_cmd = ref "" in
   let is_interpret_mode = ref false in
