@@ -2,7 +2,7 @@ open Error
 open Location
 open Format
 
-let app_name = "piterm"
+let app_name = "tapis"
 
 let print_error str =
   set_formatter_out_channel stderr;
