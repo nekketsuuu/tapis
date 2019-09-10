@@ -24,5 +24,5 @@ let show_pos2 ls le =
       ls.pos_fname ls.pos_lnum (ls.pos_cnum - ls.pos_bol)
       le.pos_fname le.pos_lnum (le.pos_cnum - le.pos_bol)
 
-let show_loc { loc_start = ls; loc_end = le } =
+let show_loc { loc_start = ls; loc_end = le; _ } =
   show_pos2 ls le
