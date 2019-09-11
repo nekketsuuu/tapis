@@ -1,0 +1,18 @@
+(env
+  (dev
+    ; Don't make some warnings as errors.
+    ; * warning 27: unused variable
+    ; * warning 32: unused value
+    ; * warning 33: unused open
+    ; * warning 39: unused rec flag
+    ; TODO(nekketsuuu): Don't suppress warnings.
+    (flags (:standard -warn-error -27-32-33-39))))
+
+(executable
+  (name main)
+  (public_name tapis)
+  (libraries unix))
+
+(ocamllex lexer)
+(menhir 
+  (modules parser))
