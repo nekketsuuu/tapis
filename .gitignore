@@ -27,3 +27,5 @@ tapis
 
 # Others
 .ocamlinit
+/vendor/*
+!/vendor/.gitkeep
