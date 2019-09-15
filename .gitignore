@@ -1,9 +1,6 @@
 # Auto-generated files
 /_build
-/src/lexer.ml
-/src/parser.ml
-/src/parser.mli
-/src/parser.conflicts
+/tapis.install
 *.cma
 *.cmi
 *.cmo
