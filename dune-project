@@ -25,4 +25,5 @@
     "\| See my graduation thesis and master thesis (in Japanese) for details of the background theory.
     ))
 
+(using fmt 1.2)
 (using menhir 2.0)
